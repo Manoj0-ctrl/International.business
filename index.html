@@ -2,421 +2,163 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>THE LEDGER — International Business Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- Chart.js CDN for Live Analytics -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
   :root{
-    --ink:#12271F;
-    --ink-2:#0C1D16;
-    --paper:#F4EFDD;
-    --paper-2:#EAE2C4;
-    --navy:#1D2B35;
-    --brass:#B08D3E;
-    --brass-light:#D8BB74;
-    --stamp-red:#9B3A34;
-    --stamp-blue:#2E4A6B;
-    --good:#3C6E47;
+    --ink:#12271F; --ink-2:#0C1D16; --paper:#F4EFDD; --paper-2:#EAE2C4;
+    --navy:#1D2B35; --brass:#B08D3E; --brass-light:#D8BB74;
+    --stamp-red:#9B3A34; --stamp-blue:#2E4A6B; --good:#3C6E47;
     --line: rgba(29,43,53,0.14);
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0; width:100%; overflow-x:hidden;}
   body{
     background:var(--ink);
     background-image:
       radial-gradient(circle at 20% 10%, rgba(216,187,116,0.06), transparent 40%),
       radial-gradient(circle at 90% 80%, rgba(216,187,116,0.05), transparent 45%);
-    color:var(--navy);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
+    color:var(--navy); font-family:'Inter',sans-serif; min-height:100vh;
+    -webkit-font-smoothing:antialiased; padding-bottom: 70px;
   }
-  #app{max-width:520px;margin:0 auto;padding:18px 14px 60px;}
-
-  /* TOAST NOTIFICATION STYLES */
+  #app{max-width:520px; margin:0 auto; padding:12px 12px 20px;}
   #toast-container {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
-    display: flex; flex-direction: column; gap: 10px; pointer-events: none; width: 92%; max-width: 450px;
+    position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none; width: 92%; max-width: 450px;
   }
   .toast {
-    background: var(--ink-2); color: var(--paper); padding: 14px 18px; border-radius: 4px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-size: 13px; font-family: 'Inter', sans-serif; line-height: 1.5;
-    border-left: 4px solid var(--brass); opacity: 0; 
-    animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, fadeOut 0.4s ease forwards 5.5s;
+    background: var(--ink-2); color: var(--paper); padding: 12px 16px; border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-size: 13px; line-height: 1.4;
+    border-left: 4px solid var(--brass); opacity: 1; transition: opacity 0.3s;
   }
-  .toast b { color: var(--brass-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
-  
-  @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-
+  .toast b { color: var(--brass-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 2px; }
   .masthead{
-    text-align:center;
-    padding:22px 10px 18px;
-    color:var(--paper);
-    border-bottom:1px solid rgba(216,187,116,0.25);
-    margin-bottom:18px;
-    position:relative;
+    text-align:center; padding:16px 10px 14px; color:var(--paper);
+    border-bottom:1px solid rgba(216,187,116,0.25); margin-bottom:14px;
   }
-  .masthead .eyebrow{
-    font-family:'JetBrains Mono',monospace;
-    letter-spacing:.28em;
-    font-size:10.5px;
-    color:var(--brass-light);
-    text-transform:uppercase;
-  }
-  .masthead h1{
-    font-family:'Playfair Display',serif;
-    font-weight:800;
-    font-size:34px;
-    margin:6px 0 4px;
-    letter-spacing:.01em;
-  }
-  .masthead .sub{
-    font-size:12px;
-    color:rgba(244,239,221,0.6);
-    font-style:italic;
-  }
-  .round-strip{
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    margin-top:14px;flex-wrap:wrap;
-  }
-  .round-pill{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    color:var(--ink);
-    background:var(--brass-light);
-    padding:5px 12px;
-    border-radius:2px;
-    letter-spacing:.06em;
-  }
+  .masthead .eyebrow{ font-family:'JetBrains Mono',monospace; letter-spacing:.2em; font-size:10px; color:var(--brass-light); text-transform:uppercase; }
+  .masthead h1{ font-family:'Playfair Display',serif; font-weight:800; font-size:30px; margin:4px 0; }
+  .masthead .sub{ font-size:11px; color:rgba(244,239,221,0.6); font-style:italic; }
+  .round-strip{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .round-pill{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink); background:var(--brass-light); padding:4px 10px; border-radius:2px; font-weight:700;}
   .btn-ghost{
-    background:transparent;border:1px solid rgba(244,239,221,0.35);
-    color:rgba(244,239,221,0.85);
-    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;
-    padding:5px 10px;border-radius:2px;cursor:pointer;
+    background:transparent; border:1px solid rgba(244,239,221,0.35); color:rgba(244,239,221,0.85);
+    font-family:'JetBrains Mono',monospace; font-size:10px; padding:4px 8px; border-radius:2px; cursor:pointer;
   }
-  .btn-ghost:hover{border-color:var(--brass-light);color:var(--brass-light);}
-  
-  .nav-tabs {
-    display: flex; gap: 10px; margin-bottom: 16px;
-  }
+  .btn-ghost:hover{ border-color:var(--brass-light); color:var(--brass-light); }
+  .nav-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
   .nav-tab {
-    flex: 1; text-align: center; padding: 10px;
-    background: rgba(244,239,221,0.1); color: var(--paper);
-    border: 1px solid rgba(244,239,221,0.2);
-    border-radius: 3px; cursor: pointer;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
-    text-transform: uppercase; transition: all 0.2s;
+    flex: 1; text-align: center; padding: 12px 6px; background: rgba(244,239,221,0.08); color: var(--paper);
+    border: 1px solid rgba(244,239,221,0.15); border-radius: 3px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; transition: all 0.2s;
   }
-  .nav-tab.active {
-    background: var(--brass-light); color: var(--ink); border-color: var(--brass-light); font-weight: bold;
-  }
-
+  .nav-tab.active { background: var(--brass-light); color: var(--ink); border-color: var(--brass-light); font-weight: bold; }
   .paper-card{
-    background:var(--paper);
-    border-radius:3px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.35);
-    padding:20px;
-    position:relative;
-    background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, var(--line) 28px);
-    margin-bottom: 16px;
+    background:var(--paper); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,0.3);
+    padding:16px; position:relative; background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, var(--line) 28px); margin-bottom: 14px;
   }
-  .paper-card::before{
-    content:'';
-    position:absolute; left:14px; top:0; bottom:0; width:1px;
-    background:rgba(155,58,52,0.18);
-  }
-  .card-title{
-    font-family:'Playfair Display',serif;
-    font-weight:700;
-    font-size:19px;
-    margin:0 0 4px 20px;
-    color:var(--ink);
-  }
-  .card-hint{
-    font-size:12px;color:rgba(29,43,53,0.55);margin:0 0 16px 20px;
-  }
-  .player-input-row{
-    display:flex;gap:8px;margin:0 0 10px 20px;
-  }
+  .paper-card::before{ content:''; position:absolute; left:14px; top:0; bottom:0; width:1px; background:rgba(155,58,52,0.15); }
+  .card-title{ font-family:'Playfair Display',serif; font-weight:700; font-size:18px; margin:0 0 4px 16px; color:var(--ink); }
+  .card-hint{ font-size:11.5px; color:rgba(29,43,53,0.55); margin:0 0 12px 16px; }
+  .player-input-row{ display:flex; gap:8px; margin:0 0 10px 16px; }
   .player-input-row input{
-    flex:1;
-    font-family:'Inter',sans-serif;
-    font-size:14.5px;
-    padding:9px 10px;
-    border:1px solid rgba(29,43,53,0.25);
-    border-radius:2px;
-    background:rgba(255,255,255,0.5);
+    flex:1; font-family:'Inter',sans-serif; font-size:14px; padding:8px 10px;
+    border:1px solid rgba(29,43,53,0.25); border-radius:2px; background:rgba(255,255,255,0.5);
   }
-  .icon-btn{
-    width:36px;flex-shrink:0;
-    border:1px solid rgba(29,43,53,0.25);
-    background:rgba(255,255,255,0.4);
-    border-radius:2px;font-size:16px;cursor:pointer;color:var(--navy);
-  }
+  .icon-btn{ width:36px; flex-shrink:0; border:1px solid rgba(29,43,53,0.25); background:rgba(255,255,255,0.4); border-radius:2px; font-size:16px; cursor:pointer; }
   .btn-primary{
-    width:100%;
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'JetBrains Mono',monospace;
-    letter-spacing:.08em;
-    font-size:12.5px;
-    text-transform:uppercase;
-    padding:13px;
-    border:none;border-radius:2px;
-    cursor:pointer;
-    margin-top:6px;
+    width:100%; background:var(--ink); color:var(--paper); font-family:'JetBrains Mono',monospace;
+    letter-spacing:.06em; font-size:12px; text-transform:uppercase; padding:12px; border:none; border-radius:2px; cursor:pointer; margin-top:4px;
   }
-  .btn-primary:hover{background:var(--ink-2);}
-  .btn-secondary{
-    width:100%;
-    background:transparent;
-    border:1.5px solid var(--ink);
-    color:var(--ink);
-    font-family:'JetBrains Mono',monospace;
-    letter-spacing:.06em;
-    font-size:11.5px;
-    text-transform:uppercase;
-    padding:10px;
-    border-radius:2px;
-    cursor:pointer;
-  }
-
-  .section-label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--brass-light);
-    margin:24px 4px 10px;
-  }
-  .player-card{
-    background:var(--paper);
-    border-radius:3px;
-    padding:14px 16px;
-    margin-bottom:10px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.25);
-    position:relative;
-    overflow:hidden;
-    transition: transform 0.1s ease;
-  }
-  .player-card.bankrupt{opacity:0.55;}
-  .player-card.room-card:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.4); }
+  .btn-primary:disabled{ background: rgba(18,39,31,0.4); cursor: not-allowed; opacity:0.6; }
+  .btn-secondary{ width:100%; background:transparent; border:1.5px solid var(--ink); color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; padding:8px; border-radius:2px; cursor:pointer; }
+  .section-label{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--brass-light); margin:18px 4px 8px; }
+  .player-card{ background:var(--paper); border-radius:3px; padding:12px 14px; margin-bottom:8px; box-shadow:0 4px 12px rgba(0,0,0,0.18); position:relative; overflow:hidden; }
+  .player-card.active-turn-card { border: 2px solid var(--brass); background: #fdfbf3; }
+  .player-card.bankrupt{ opacity:0.5; }
+  .rank-row{ display:flex; align-items:center; justify-content:space-between; }
+  .rank-name{ display:flex; align-items:baseline; gap:6px; }
+  .rank-num{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--brass); font-weight:700; }
+  .p-name{ font-family:'Playfair Display',serif; font-weight:700; font-size:17px; color:var(--ink); }
+  .liquid-cash{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:19px; color:var(--good); }
+  .sub-figures{ display:flex; gap:10px; margin-top:4px; font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(29,43,53,0.65); flex-wrap: wrap; }
+  .stamps{ display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+  .stamp{ font-family:'JetBrains Mono',monospace; font-size:9px; border:1.5px dashed var(--stamp-red); color:var(--stamp-red); padding:1px 6px; border-radius:20px; transform:rotate(-2deg); display:inline-block; text-transform:uppercase; }
+  .stamp.blue{ border-color:var(--stamp-blue); color:var(--stamp-blue); transform:rotate(2deg); }
+  .stamp.turn{ border-color:var(--good); color:var(--good); font-weight:700; }
+  .props-toggle{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--brass); margin-top:8px; cursor:pointer; display:inline-block; }
+  .props-list{ margin-top:6px; border-top:1px dashed rgba(29,43,53,0.15); padding-top:6px; }
+  .prop-row{ display:flex; justify-content:space-between; align-items: center; font-size:12px; padding:4px 0; color:var(--navy); }
+  .prop-row .cat{ font-family:'JetBrains Mono',monospace; font-size:8.5px; color:rgba(29,43,53,0.45); margin-right:4px; text-transform:uppercase; }
+  .prop-row .mort{ color:var(--stamp-red); font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; margin-left:4px; }
+  .prop-row .bldgs{ color:var(--brass); font-family:'JetBrains Mono',monospace; font-size:9.5px; margin-left:4px; }
+  .action-select{ width:100%; font-family:'Inter',sans-serif; font-size:13.5px; padding:8px; border:1px solid rgba(29,43,53,0.25); border-radius:2px; background:rgba(255,255,255,0.6); margin-bottom:8px; color:var(--navy); }
+  .field-label{ font-family:'JetBrains Mono',monospace; font-size:9.5px; text-transform:uppercase; color:rgba(29,43,53,0.55); margin:6px 0 3px 2px; }
+  .field-row{ display:flex; gap:6px; }
+  .field-row > *{ flex:1; }
+  .hint-box{ font-size:11px; color:rgba(29,43,53,0.6); background:rgba(176,141,62,0.1); border-left:2px solid var(--brass); padding:6px 8px; margin:6px 0; border-radius:2px; }
+  .card-preview{ font-size:12px; color:var(--navy); background:rgba(255,255,255,0.5); border:1px dashed rgba(29,43,53,0.25); padding:8px; margin:6px 0; border-radius:2px; line-height:1.4; }
+  .log-entry{ display:flex; gap:8px; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.1); }
+  .log-time{ font-family:'JetBrains Mono',monospace; font-size:9.5px; color:rgba(244,239,221,0.4); white-space:nowrap; }
+  .log-text{ font-size:12px; color:rgba(244,239,221,0.85); line-height:1.4; }
+  .log-text b{ color:var(--brass-light); }
+  .empty-log{ color:rgba(244,239,221,0.4); font-size:11.5px; text-align:center; padding:14px 0; font-style:italic; }
+  .chart-container { position: relative; height: 180px; width: 100%; margin-bottom: 12px; }
+  .offline-badge { display: none; background: var(--stamp-red); color: white; font-family: 'JetBrains Mono', monospace; font-size: 9px; text-align: center; padding: 2px; position: fixed; top: 0; left: 0; width: 100%; z-index: 10000; letter-spacing: 0.1em; }
+  body.is-offline .offline-badge { display: block; }
   
-  .rank-row{display:flex;align-items:center;justify-content:space-between;}
-  .rank-name{display:flex;align-items:baseline;gap:8px;}
-  .rank-num{
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;color:var(--brass);
-    font-weight:700;
+  /* FIXED BOTTOM MOBILE NAVIGATION BAR */
+  .mobile-nav {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 56px; background: var(--ink-2);
+    border-top: 1px solid rgba(216,187,116,0.2); display: flex; z-index: 999; box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
   }
-  .p-name{
-    font-family:'Playfair Display',serif;
-    font-weight:700;font-size:18px;color:var(--ink);
+  .mobile-nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: rgba(244,239,221,0.6); font-size: 10px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; cursor: pointer;
   }
-  .liquid-cash{
-    font-family:'JetBrains Mono',monospace;
-    font-weight:700;font-size:22px;color:var(--good);
-  }
-  .sub-figures{
-    display:flex;gap:14px;margin-top:6px;
-    font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(29,43,53,0.65);
-  }
-  .stamps{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
-  .stamp{
-    font-family:'JetBrains Mono',monospace;
-    font-size:9.5px;letter-spacing:.08em;
-    border:1.5px dashed var(--stamp-red);
-    color:var(--stamp-red);
-    padding:2px 7px;border-radius:20px;
-    transform:rotate(-4deg);
-    display:inline-block;
-    text-transform:uppercase;
-  }
-  .stamp.blue{border-color:var(--stamp-blue);color:var(--stamp-blue);transform:rotate(3deg);}
-  .props-toggle{
-    font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--brass);
-    margin-top:10px;cursor:pointer;letter-spacing:.05em;
-    display:inline-block;
-  }
-  .props-list{margin-top:8px;border-top:1px dashed rgba(29,43,53,0.2);padding-top:8px;}
-  .prop-row{
-    display:flex;justify-content:space-between;
-    font-size:12.5px;padding:3px 0;color:var(--navy);
-  }
-  .prop-row .cat{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(29,43,53,0.45);margin-right:6px;text-transform:uppercase;}
-  .prop-row .mort{color:var(--stamp-red);font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:6px;}
-
-  .action-select{
-    width:100%;
-    font-family:'Inter',sans-serif;
-    font-size:14px;
-    padding:10px;
-    border:1px solid rgba(29,43,53,0.25);
-    border-radius:2px;
-    background:rgba(255,255,255,0.6);
-    margin-bottom:10px;
-    color:var(--navy);
-  }
-  .field-label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-    color:rgba(29,43,53,0.55);
-    margin:8px 0 4px 2px;
-  }
-  .field-row{display:flex;gap:8px;}
-  .field-row > *{flex:1;}
-  .hint-box{
-    font-size:11.5px;color:rgba(29,43,53,0.6);
-    background:rgba(176,141,62,0.12);
-    border-left:2px solid var(--brass);
-    padding:7px 9px;margin:8px 0;border-radius:2px;
-  }
-  .card-preview{
-    font-size:12.5px;color:var(--navy);
-    background:rgba(255,255,255,0.5);
-    border:1px dashed rgba(29,43,53,0.25);
-    padding:9px 10px;margin:8px 0;border-radius:2px;
-    line-height:1.5;
-  }
-  .card-preview .cnum{
-    font-family:'JetBrains Mono',monospace;color:var(--stamp-red);font-weight:700;margin-right:4px;
-  }
-
-  .log-entry{
-    display:flex;gap:10px;
-    padding:9px 0;
-    border-bottom:1px dashed rgba(255,255,255,0.12);
-  }
-  .log-time{
-    font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,239,221,0.4);
-    white-space:nowrap;padding-top:2px;
-  }
-  .log-text{font-size:12.5px;color:rgba(244,239,221,0.85);line-height:1.45;}
-  .log-text b{color:var(--brass-light);}
-  .empty-log{color:rgba(244,239,221,0.4);font-size:12px;text-align:center;padding:20px 0;font-style:italic;}
-
-  select, input{outline:none;}
-  select:focus, input:focus{border-color:var(--brass);}
+  .mobile-nav-item.active { color: var(--brass-light); font-weight: bold; }
+  .mobile-nav-icon { font-size: 18px; margin-bottom: 2px; }
   
-  .chart-container {
-    position: relative; height: 220px; width: 100%; margin-bottom: 20px; margin-left: 10px;
-  }
+  /* GRID LAYOUT FOR PROPERTY PORTFOLIOS */
+  .prop-grid-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px; }
+  .prop-tile { background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.08); padding: 6px; border-radius: 2px; font-size: 11px; position: relative; }
+  .prop-tile .color-bar { height: 4px; width: 100%; margin-bottom: 4px; border-radius: 1px; }
 </style>
 </head>
 <body>
+<div class="offline-badge" id="offlineIndicator">OFFLINE MODE — RECONNECTING TO GAME ROOM</div>
 <div id="toast-container"></div>
 <div id="app"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAmmXAvo6-q1iz36LuvLl7W95f17Q0_pTY",
-    authDomain: "business-da37a.firebaseapp.com",
-    projectId: "business-da37a",
-    storageBucket: "business-da37a.firebasestorage.app",
-    messagingSenderId: "452662224355",
-    appId: "1:452662224355:web:ab9af70d8d8f3121002cd6",
-    databaseURL: "https://business-da37a-default-rtdb.firebaseio.com"
-  };
-
+  // Global Context Initialization
+  const appElement = document.getElementById('app');
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
   const getRoomId = () => window.location.hash.replace('#', '').trim();
-
-  window.addEventListener('hashchange', () => {
-    window.location.reload();
-  });
-
+  const identityKey = 'ledger_identity_v3_' + getRoomId();
+  let localPlayerId = getRoomId() ? localStorage.getItem(identityKey) : null;
+  let currentView = 'dashboard'; // Options: 'dashboard', 'overview', 'properties'
+  
   let state = null;
   let lobbyState = null;
-  
-  // Local Session Management (Fixed strict checking)
-  const identityKey = 'ledger_identity_' + getRoomId();
-  let localPlayerId = getRoomId() ? localStorage.getItem(identityKey) : null;
-  if(localPlayerId === 'null') localPlayerId = null; // Clean ghost sessions
-  
-  let currentView = 'dashboard'; 
-  
-  // Chart Instances
   let barChart = null;
   let pieChart = null;
 
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function escapeAttr(s){ return escapeHtml(s); }
-  function uid(){ return Math.random().toString(36).slice(2,9); }
-  function fmt(n){ const neg = n < 0; const v = Math.abs(Math.round(n)); return (neg?'-':'') + '$' + v.toLocaleString('en-US'); }
+  // Track Connection Status
+  window.addEventListener('online', () => document.body.className = '');
+  window.addEventListener('offline', () => document.body.className = 'is-offline');
 
-  // -------------------------------------------------------------
-  // TOAST NOTIFICATIONS (RULES SYSTEM)
-  // -------------------------------------------------------------
-  function showToast(title, message) {
-    const container = document.getElementById('toast-container');
-    if(!container) return;
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.innerHTML = `<b>${title}</b>${message}`;
-    container.appendChild(t);
-    setTimeout(() => t.remove(), 6000);
-  }
+  window.addEventListener('hashchange', () => window.location.reload());
 
-  function triggerRuleReminder(txType) {
-    const rules = {
-      'buyProperty': { t: 'Rule: Buying Property', m: 'Unowned properties you land on can be bought. If you decline, the Bank auctions it to the highest bidder.' },
-      'mortgage': { t: 'Rule: Mortgages', m: 'Mortgaged properties collect NO rent. To unmortgage, you pay the Bank the exact mortgage value (no interest).' },
-      'duty': { t: 'Rule: Duty / Taxes', m: 'Custom Duty = $100 per unmortgaged property (Max $1000). Travelling Duty = $50 per property (Max $500).' },
-      'creditCardUse': { t: 'Rule: Credit Card', m: 'The limit is $10,000. It MUST be repaid in exactly 6 installments of $2,000 each ($12,000 total).' },
-      'passStart': { t: 'Rule: Start Space', m: 'You collect $1,500 from the Bank every time you pass or land on the Start space.' },
-      'jailEnter': { t: 'Rule: Jail Penalty', m: 'In Jail, you lose your turn and CANNOT collect rent. Pay $500 or roll a 12 to get out.' },
-      'passportRegain': { t: 'Rule: Passport', m: 'Without a passport, you CANNOT collect rent. Regain it by paying $5,000 or waiting 6 rounds.' },
-      'partyHouse': { t: 'Rule: Party House', m: 'Collect $200 from EVERY other active player on the board.' },
-      'resort': { t: 'Rule: Resort', m: 'Pay $200 to EVERY other active player on the board.' }
-    };
-    
-    if(rules[txType]) {
-      // Clear existing toasts so they don't stack infinitely
-      document.getElementById('toast-container').innerHTML = '';
-      showToast(rules[txType].t, rules[txType].m);
-    }
-  }
-
-  // -------------------------------------------------------------
-  // LOBBY vs ROOM ROUTING
-  // -------------------------------------------------------------
-  if (!getRoomId()) {
-    onValue(ref(db, 'ledger_rooms'), (snapshot) => {
-      lobbyState = snapshot.val() || {};
-      renderLobby();
-    });
-  } else {
-    let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
-    onValue(gameRef, (snapshot) => {
-      const data = snapshot.val();
-      const draftBackup = state ? state._draftPlayers : null;
-      const activeTxTypeBackup = state ? state._txType : null;
-      const openPropsBackup = state ? state._openProps : null;
-
-      state = data ? data : defaultState();
-
-      if (!state.started && draftBackup) state._draftPlayers = draftBackup;
-      if (!state._txType && activeTxTypeBackup) state._txType = activeTxTypeBackup;
-      if (!state._openProps && openPropsBackup) state._openProps = openPropsBackup;
-
-      render();
-    });
-  }
-
-  // -------------------------------------------------------------
-  // DATA CONSTANTS
-  // -------------------------------------------------------------
-  const DUTY_RATES = { custom:{rate:100,cap:1000,label:'Custom Duty'}, travel:{rate:50,cap:500,label:'Travelling Duty'} };
   const PASS_START_BONUS = 1500;
-
   const MASTER_PROPERTIES = [
     {name:'Italy', price:3500, rent:200, mortgage:1000, category:'Country', color:'Red'},
     {name:'Germany', price:3500, rent:400, mortgage:1750, category:'Country', color:'Red'},
@@ -438,1075 +180,703 @@
     {name:'Japan', price:2500, rent:250, mortgage:1250, category:'Country', color:'Blue'},
     {name:'Iraq', price:5000, rent:500, mortgage:2500, category:'Country', color:'Green'},
     {name:'Singapore', price:3000, rent:300, mortgage:1500, category:'Country', color:'Blue'},
-    {name:'Satellite', price:2000, rent:500, mortgage:1250, category:'Transport', color:""},
-    {name:'Waterways', price:9500, rent:1400, mortgage:2000, category:'Transport', color:""},
-    {name:'Airways', price:10500, rent:1500, mortgage:5500, category:'Transport', color:""},
-    {name:'Roadways', price:3500, rent:800, mortgage:1800, category:'Transport', color:""},
-    {name:'Petroleum', price:5500, rent:500, mortgage:1300, category:'Transport', color:""},
-    {name:'Railways', price:9500, rent:1500, mortgage:5000, category:'Transport', color:""}
+    {name:'Satellite', price:2000, rent:500, mortgage:1250, category:'Transport', color:"Gray"},
+    {name:'Waterways', price:9500, rent:1400, mortgage:2000, category:'Transport', color:"Gray"},
+    {name:'Airways', price:10500, rent:1500, mortgage:5500, category:'Transport', color:"Gray"},
+    {name:'Roadways', price:3500, rent:800, mortgage:1800, category:'Transport', color:"Gray"},
+    {name:'Petroleum', price:5500, rent:500, mortgage:1300, category:'Transport', color:"Gray"},
+    {name:'Railways', price:9500, rent:1500, mortgage:5000, category:'Transport', color:"Gray"}
   ];
 
-  const CARD_DECKS = {
-    chance_even: { label:'CHANCE — even roll (2,4,6) · pay the Bank', cards:[
-      {num:2,  text:'Loss in Share market', amount:2000, type:'pay'},
-      {num:4,  text:'Fine for Accident due to Wrong Driving', amount:1000, type:'pay'},
-      {num:6,  text:'House repair', amount:1500, type:'pay'},
-      {num:8,  text:'Loss due to fire in godown', amount:3000, type:'pay'},
-      {num:10, text:'Go to Jail', amount:0, type:'jail'},
-      {num:12, text:'Repair of your Car', amount:200, type:'pay'},
-    ]},
-    chance_odd: { label:'CHANCE — odd roll (1,3,5,7,9,11) · receive from Bank', cards:[
-      {num:1,  text:'Lottery prize', amount:2500, type:'receive'},
-      {num:3,  text:'You have won cross word prize', amount:1000, type:'receive'},
-      {num:5,  text:'You have won Jackpot', amount:2000, type:'receive'},
-      {num:7,  text:'Collect rent from each player for all of your sites', amount:100, type:'collectEach'},
-      {num:9,  text:'Sale of stocks', amount:3000, type:'receive'},
-      {num:11, text:'Prize for best performance in Export', amount:1500, type:'receive'},
-    ]},
-    uno_even: { label:'UNO — even roll (2,4,6,8,10,12) · receive from Bank', cards:[
-      {num:2,  text:"It's your Anniversary — collect from each player", amount:500, type:'collectEach'},
-      {num:4,  text:'1st prize in Beauty contest', amount:2500, type:'receive'},
-      {num:6,  text:'Income tax refund', amount:2000, type:'receive'},
-      {num:8,  text:'Go to Party House & collect from each player', amount:200, type:'collectEach'},
-      {num:10, text:'Receive interest on shares', amount:1500, type:'receive'},
-      {num:12, text:'Sale of stocks', amount:3000, type:'receive'},
-    ]},
-    uno_odd: { label:'UNO — odd roll (1,3,5,7,9,11) · pay the Bank', cards:[
-      {num:1,  text:'Pay Insurance premium', amount:1500, type:'pay'},
-      {num:3,  text:'Go to Jail', amount:0, type:'jail'},
-      {num:5,  text:'School and Medical Fees', amount:2500, type:'pay'},
-      {num:7,  text:'Submit your Passport', amount:0, type:'passportLose'},
-      {num:9,  text:'Make General Repair on all your properties', amount:null, type:'repair', perHouse:50, perHotel:100},
-      {num:11, text:'Pay for each house / hotel you own', amount:null, type:'repair', perHouse:50, perHotel:100},
-    ]},
-  };
+  const COLOR_HEX = { Red: '#9B3A34', Yellow: '#B08D3E', Green: '#3C6E47', Blue: '#2E4A6B', Gray: '#555555' };
 
   function defaultState(){
-    return { started:false, round:1, players:[], board:[], log:[] };
+    return { started:false, shortGame:false, round:1, turnIndex:0, players:[], board:[], log:[], victorDeclared:false };
   }
 
-  async function saveState(){
-    try{ 
-      let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
-      await set(gameRef, state); 
-    } catch(e){ 
-      console.error('Firebase state persistence push failed', e); 
-    }
-  }
-
-  function activePlayers(){ return (state.players || []).filter(p=>!p.bankrupt); }
-  function playerById(id){ return (state.players || []).find(p=>p.id===id); }
-  function ownedBy(playerId){ return (state.board || []).filter(pr=>pr.ownerId===playerId); }
-
-  function netWorth(p){
-    const propsVal = ownedBy(p.id).reduce((s,pr)=>s+(pr.mortgaged?0:pr.price),0);
-    const ccDebt = (p.creditCard && p.creditCard.used) ? p.creditCard.remainingInstallments*2000 : 0;
-    return p.cash + propsVal - ccDebt;
+  function showToast(title, text) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<b>${title}</b>${text}`;
+    const tc = document.getElementById('toast-container');
+    if(tc) { tc.appendChild(el); setTimeout(() => el.remove(), 6000); }
   }
 
   // -------------------------------------------------------------
-  // RENDER VIEWS
+  // MUTATION ROUTER VIA FIREBASE TRANSACTION BLOCKS
+  // -------------------------------------------------------------
+  function mutateRoomState(txPayload, callback = null) {
+    if (!getRoomId()) return;
+    const roomRef = ref(db, 'ledger_rooms/' + getRoomId());
+    runTransaction(roomRef, (currentData) => {
+      if (!currentData) return txPayload(defaultState());
+      return txPayload(currentData);
+    }).then(() => { if (callback) callback(); })
+      .catch((err) => console.error("Synchronization transaction rejected", err));
+  }
+
+  // -------------------------------------------------------------
+  // MULTIPLAYER SYNC DISTRIBUTION STREAM
+  // -------------------------------------------------------------
+  if (!getRoomId()) {
+    onValue(ref(db, 'ledger_rooms'), (snap) => { lobbyState = snap.val() || {}; renderLobby(); });
+  } else {
+    onValue(ref(db, 'ledger_rooms/' + getRoomId()), (snap) => {
+      state = snap.val() || defaultState();
+      render();
+    });
+  }
+
+  // -------------------------------------------------------------
+  // AUTOMATED COMPANION MATCH RULES ENGINE
+  // -------------------------------------------------------------
+  function checkMonopoly(playerId, colorGroup) {
+    if (!colorGroup || colorGroup === "Gray") return false;
+    const targetGroupCount = MASTER_PROPERTIES.filter(p => p.color === colorGroup).length;
+    const playerOwnedCount = (state.board || []).filter(p => p.ownerId === playerId && p.color === colorGroup && !p.mortgaged).length;
+    return playerOwnedCount === targetGroupCount;
+  }
+
+  function computeRent(property) {
+    if (!property.ownerId || property.mortgaged) return 0;
+    const owner = playerById(property.ownerId);
+    if (!owner || owner.jailed || !owner.passport || owner.bankrupt) return 0;
+
+    let finalRent = property.rent;
+    if (checkMonopoly(property.ownerId, property.color)) {
+      finalRent *= 2;
+    }
+    
+    const houseCount = property.houses || 0;
+    if (houseCount > 0 && houseCount <= 3) {
+      finalRent += (houseCount * (property.rent * 1.5));
+    }
+    if (property.hotel) {
+      finalRent += (property.rent * 5);
+    }
+    return Math.round(finalRent);
+  }
+
+  function advanceTurn(currentState) {
+    let loopGuard = 0;
+    do {
+      currentState.turnIndex = (currentState.turnIndex + 1) % currentState.players.length;
+      loopGuard++;
+    } while (currentState.players[currentState.turnIndex].bankrupt && loopGuard <= currentState.players.length);
+
+    if (currentState.turnIndex === 0) {
+      currentState.round += 1;
+      // Auto resolve passive target validation milestones
+      currentState.players.forEach(p => {
+        if (!p.passport && currentState.round - (p.passportLostRound || 1) >= 6) {
+          p.passport = true;
+        }
+      });
+    }
+  }
+
+  function activePlayers() { return (state.players || []).filter(p => !p.bankrupt); }
+  function playerById(id) { return (state.players || []).find(p => p.id === id); }
+  function ownedBy(playerId) { return (state.board || []).filter(pr => pr.ownerId === playerId); }
+
+  // -------------------------------------------------------------
+  // USER INTERFACE LAYOUT DEFINITIONS
   // -------------------------------------------------------------
   function renderLobby() {
-    const app = document.getElementById('app');
-    const roomsHtml = Object.keys(lobbyState).map(key => {
-       const r = lobbyState[key];
-       const status = r.started ? `Round ${r.round} &middot; ${(r.players||[]).length} players` : `Setting up...`;
-       return `
-         <div class="player-card room-card" style="cursor:pointer;" data-join-room="${escapeAttr(key)}">
-           <div class="rank-row">
-             <div class="rank-name"><span class="p-name">#${escapeHtml(key)}</span></div>
-             <div class="net-worth" style="font-size:12.5px;color:rgba(29,43,53,0.55);font-family:'Inter',sans-serif;">${status} &rarr;</div>
-           </div>
-         </div>
-       `;
-    }).join('') || '<div class="empty-log" style="margin-top:-10px;">No active rooms found. Create one above!</div>';
-
-    app.innerHTML = `
-      <div class="masthead">
-        <div class="eyebrow">EST. AT THE TABLE &middot; BANK & TRUST</div>
-        <h1>THE LEDGER</h1>
-        <div class="sub">a live account of fortunes won & lost</div>
-      </div>
-      <div class="paper-card">
-        <div class="card-title">Open a new room</div>
-        <div class="card-hint">Create a private sync session for your game.</div>
-        <div class="player-input-row" style="margin-left:0; margin-top:14px;">
-          <input type="text" id="newRoomName" placeholder="Room name (e.g. GameNight)" maxlength="20">
-        </div>
-        <button class="btn-primary" id="btnCreateRoom">Create & Join Room</button>
-      </div>
-      <div class="section-label">Active Sessions</div>
-      ${roomsHtml}
-    `;
-
-    document.getElementById('btnCreateRoom').addEventListener('click', () => {
-       const val = document.getElementById('newRoomName').value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-       if(val) window.location.hash = val;
-    });
-    document.querySelectorAll('[data-join-room]').forEach(el => {
-       el.addEventListener('click', () => {
-          window.location.hash = el.dataset.joinRoom;
-       });
-    });
-  }
-
-  function render(){
-    const app = document.getElementById('app');
-    
-    // Phase 1: Setup
-    if(!state.started){
-      app.innerHTML = renderSetup();
-      bindSetup();
-      return;
-    }
-    
-    // Phase 2: Identity Gate (Strict Check)
-    if(!localPlayerId){
-      app.innerHTML = renderIdentityGate();
-      bindIdentityGate();
-      return;
-    }
-
-    // Phase 3: Main Application Routing
-    let content = renderHeader() + renderNavTabs();
-    
-    if (currentView === 'dashboard') {
-      content += renderDashboard();
-    } else {
-      content += renderOverview();
-    }
-    
-    app.innerHTML = content;
-    bindDashboard();
-    
-    if(currentView === 'overview') {
-      setTimeout(updateCharts, 50);
-    }
-  }
-  
-  function renderNavTabs() {
-    return `
-      <div class="nav-tabs">
-        <div class="nav-tab ${currentView==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</div>
-        <div class="nav-tab ${currentView==='overview'?'active':''}" data-tab="overview">Global Overview</div>
-      </div>
-    `;
-  }
-
-  function renderIdentityGate() {
-    const playersHtml = (state.players || []).map(p => `
-      <button class="btn-secondary" style="margin-bottom:8px;" data-identity="${p.id}">Play as ${escapeHtml(p.name)}</button>
-    `).join('');
-    
-    return `
-      <div class="masthead">
-        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())}</div>
-        <h1>Who are you?</h1>
-        <div class="sub">Select your identity to access your personal dashboard.</div>
-      </div>
-      <div class="paper-card" style="text-align:center;">
-        ${playersHtml}
-        <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:16px 0;">
-        <button class="btn-ghost" style="color:var(--ink); border-color:var(--ink);" data-identity="banker">Join as Banker / Spectator</button>
-      </div>
-    `;
-  }
-  
-  function bindIdentityGate() {
-    document.querySelectorAll('[data-identity]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        localPlayerId = e.target.dataset.identity;
-        localStorage.setItem(identityKey, localPlayerId);
-        showToast("Identity Verified", "You are now connected to the live session.");
-        render();
-      });
-    });
-  }
-
-  function renderHeader(){
-    const myPlayer = playerById(localPlayerId);
-    const greeting = myPlayer ? `Hey, ${escapeHtml(myPlayer.name)}` : 'Banker View';
-    return `
-      <div class="masthead">
-        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; ${greeting}</div>
-        <h1>THE LEDGER</h1>
-        <div class="sub">a live account of fortunes won & lost</div>
-        <div class="round-strip">
-          <span class="round-pill">ROUND ${state.round}</span>
-          <button class="btn-ghost" data-action="switch-user">switch player</button>
-          <button class="btn-ghost" data-action="leave-room">&larr; lobby</button>
-          <button class="btn-ghost" data-action="reset-game">reset</button>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderSetup(){
-    if(!state._draftPlayers || state._draftPlayers.length===0) state._draftPlayers = ['',''];
-    const rows = state._draftPlayers.map((name,i)=>`
-      <div class="player-input-row">
-        <input type="text" data-draft-idx="${i}" value="${escapeAttr(name)}" placeholder="Player ${i+1} name" maxlength="18">
-        ${state._draftPlayers.length>2?`<button class="icon-btn" data-remove-draft="${i}">&times;</button>`:''}
-      </div>
-    `).join('');
-    return `
-      <div class="masthead">
-        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
-        <h1>THE LEDGER</h1>
-        <div class="sub">a live account of fortunes won & lost</div>
-        <div class="round-strip" style="margin-top:16px;">
-          <button class="btn-ghost" data-action="leave-room" style="padding:6px 14px;">&larr; Back to Lobby</button>
-        </div>
-      </div>
-      <div class="paper-card">
-        <div class="card-title">Open new accounts</div>
-        <div class="card-hint">Every player starts with $25,000 cash, a $10,000 credit line, and a valid passport.</div>
-        ${rows}
-        <button class="btn-secondary" data-action="add-draft" style="margin-bottom:14px;">+ add player</button>
-        <button class="btn-primary" data-action="start-game">Start the game</button>
-      </div>
-    `;
-  }
-
-  // --- DASHBOARD VIEW (Specific to User) ---
-  function renderDashboard() {
-    let html = '';
-    const p = playerById(localPlayerId);
-    
-    if (p) {
-      const owned = ownedBy(p.id);
-      const nw = netWorth(p);
-      html += `
-        <div class="section-label">Your Accounts</div>
-        <div class="paper-card" style="text-align:center;">
-          <div class="sub-figures" style="justify-content:center; margin-bottom:4px;">Liquid Cash Available</div>
-          <div class="liquid-cash" style="font-size:36px; margin-bottom:12px;">${fmt(p.cash)}</div>
-          <div class="sub-figures" style="justify-content:center;">
-            <span>net worth: ${fmt(nw)}</span>
-            <span>props: ${owned.filter(pr=>!pr.mortgaged).length}</span>
-          </div>
-          ${stampRow(p)}
-          <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:16px 0;">
-          <div class="card-title" style="font-size:15px; margin:0 0 10px 0; text-align:left;">Your Portfolio</div>
-          <div class="props-list" style="border:none; padding:0; text-align:left;">
-            ${owned.length===0?'<div style="font-size:12px;color:rgba(29,43,53,0.5);">No properties owned yet.</div>':''}
-            ${owned.map(pr=>`
-              <div class="prop-row">
-                <span><span class="cat">${pr.category}</span>${escapeHtml(pr.name)}${pr.mortgaged?'<span class="mort">MORTGAGED</span>':''}</span>
-                <span>${fmt(pr.price)}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    } else {
-      html += `<div class="hint-box" style="margin-bottom:16px;">You are observing as the Banker. Use the action panel below to orchestrate the game.</div>`;
-    }
-    
-    html += renderActionPanel();
-    return html;
-  }
-
-  // --- OVERVIEW VIEW (Global Stats) ---
-  function renderOverview() {
-    let html = `
-      <div class="section-label">Live Analytics</div>
-      <div class="paper-card">
-        <div class="card-title" style="font-size:14px; text-align:center; margin:0 0 10px 0;">Capital & Equity</div>
-        <div class="chart-container">
-          <canvas id="netWorthChart"></canvas>
-        </div>
-        <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:20px 0;">
-        <div class="card-title" style="font-size:14px; text-align:center; margin:0 0 10px 0;">Global Real Estate Control</div>
-        <div class="chart-container" style="height: 180px;">
-          <canvas id="assetChart"></canvas>
-        </div>
-      </div>
-    `;
-    
-    html += renderLeaderboard();
-    html += renderLog();
-    return html;
-  }
-
-  function renderLeaderboard(){
-    const sorted = [...(state.players || [])].sort((a,b)=>a.cash - b.cash).reverse();
-    const cards = sorted.map((p,i)=>{
-      const propsOpen = state._openProps === p.id;
-      const owned = ownedBy(p.id);
-      const propsHtml = propsOpen ? `
-        <div class="props-list">
-          ${owned.length===0?'<div style="font-size:12px;color:rgba(29,43,53,0.5);">No properties owned yet.</div>':''}
-          ${owned.map(pr=>`
-            <div class="prop-row">
-              <span><span class="cat">${pr.category}</span>${escapeHtml(pr.name)}${pr.mortgaged?'<span class="mort">MORTGAGED</span>':''}</span>
-              <span>${fmt(pr.price)}</span>
-            </div>
-          `).join('')}
-        </div>` : '';
+    const list = Object.keys(lobbyState).map(k => {
+      const rm = lobbyState[k];
       return `
-        <div class="player-card ${p.bankrupt?'bankrupt':''}">
+        <div class="player-card room-card" style="cursor:pointer;" data-room="${escapeAttr(k)}">
           <div class="rank-row">
-            <div class="rank-name">
-              <span class="rank-num">#${i+1}</span>
-              <span class="p-name">${escapeHtml(p.name)}</span>
-            </div>
-            <div class="liquid-cash">${fmt(p.cash)}</div>
+            <span class="p-name">#${escapeHtml(k.toUpperCase())}</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px;">
+              ${rm.started ? `Round ${rm.round} &middot; ${(rm.players||[]).length}P` : 'Configuring...'}
+            </span>
+          </div>
+        </div>`;
+    }).join('');
+
+    appElement.innerHTML = `
+      <div class="masthead"><div class="eyebrow">Companion Matrix</div><h1>THE LEDGER</h1><div class="sub">Multiplayer Room Gate</div></div>
+      <div class="paper-card">
+        <div class="card-title">Initiate Session</div>
+        <div class="player-input-row" style="margin-left:0;"><input type="text" id="rmInput" placeholder="AlphaRoomSignature" style="text-transform:uppercase;"></div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <label style="font-family:'JetBrains Mono',monospace; font-size:11px; display:flex; align-items:center; gap:4px; color:var(--ink);">
+            <input type="checkbox" id="shortGameModeToggle"> Short Game Structure
+          </label>
+        </div>
+        <button class="btn-primary" id="createBtn" style="margin-top:12px;">Create / Join Room</button>
+      </div>
+      <div class="section-label">Active Sessions</div>${list || '<div class="empty-log">Zero servers found.</div>'}`;
+
+    document.getElementById('createBtn').onclick = () => {
+      const code = document.getElementById('rmInput').value.trim().toUpperCase();
+      if(!code) return;
+      const isShort = document.getElementById('shortGameModeToggle').checked;
+      window.location.hash = code;
+      // Setup structural initialization defaults if room node is unpopulated
+      mutateRoomState(d => {
+        if(!d.started) d.shortGame = isShort;
+        return d;
+      });
+    };
+    document.querySelectorAll('[data-room]').forEach(el => el.onclick = () => window.location.hash = el.dataset.room);
+  }
+
+  function renderMobileNav() {
+    if(!state.started) return '';
+    return `
+      <div class="mobile-nav">
+        <div class="mobile-nav-item ${currentView==='dashboard'?'active':''}" data-nav="dashboard">
+          <span class="mobile-nav-icon">👤</span>Dashboard
+        </div>
+        <div class="mobile-nav-item ${currentView==='properties'?'active':''}" data-nav="properties">
+          <span class="mobile-nav-icon">🗺️</span>Properties
+        </div>
+        <div class="mobile-nav-item ${currentView==='overview'?'active':''}" data-nav="overview">
+          <span class="mobile-nav-icon">📊</span>Overview
+        </div>
+      </div>`;
+  }
+
+  function renderHeaderView() {
+    const curTurnPlayer = state.players[state.turnIndex];
+    return `
+      <div class="masthead">
+        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId())} &middot; ROUND ${state.round}</div>
+        <h1>THE LEDGER</h1>
+        <div class="round-strip">
+          <span class="round-pill" style="background:var(--ink); color:var(--paper);">TURN: ${escapeHtml(curTurnPlayer?.name || 'None')}</span>
+          <button class="btn-ghost" id="swapIdentBtn">Role</button>
+          <button class="btn-ghost" id="leaveRoomBtn">Lobby</button>
+          <button class="btn-ghost" id="manualTurnAdvanceBtn">Next Turn &rarr;</button>
+        </div>
+      </div>`;
+  }
+
+  function renderSetup() {
+    if(!state._draftPlayers) state._draftPlayers = ['',''];
+    const r = state._draftPlayers.map((n, i) => `
+      <div class="player-input-row">
+        <input type="text" class="draft-inp" data-idx="${i}" value="${escapeAttr(n)}" placeholder="Player ${i+1} Nickname">
+        ${state._draftPlayers.length > 2 ? `<button class="icon-btn remove-draft-btn" data-idx="${i}">&times;</button>` : ''}
+      </div>`).join('');
+    return `
+      <div class="masthead"><h1>THE LEDGER</h1><div class="sub">Configure Player Identities</div></div>
+      <div class="paper-card">
+        <div class="card-title">Initialize Accounts ${state.shortGame ? '(Short Game Structure)' : ''}</div>
+        ${r}
+        <button class="btn-secondary" id="addDraftBtn">+ Add Player Allocation</button>
+        <button class="btn-primary" id="initGameBtn">Deploy Core Environment</button>
+      </div>`;
+  }
+
+  function renderDashboard() {
+    const me = playerById(localPlayerId);
+    let viewSegment = '';
+    
+    if (me) {
+      const owned = ownedBy(me.id);
+      const activeTurnPlayer = state.players[state.turnIndex];
+      const isMyTurn = activeTurnPlayer?.id === me.id;
+
+      viewSegment += `
+        <div class="player-card ${isMyTurn?'active-turn-card':''} ${me.bankrupt?'bankrupt':''}">
+          <div class="rank-row">
+            <span class="p-name">${escapeHtml(me.name)} ${isMyTurn?'(Active)':''}</span>
+            <span class="liquid-cash">${fmt(me.cash)}</span>
           </div>
           <div class="sub-figures">
-            <span>net worth ${fmt(netWorth(p))}</span>
-            <span>props ${owned.filter(pr=>!pr.mortgaged).length}</span>
+            <span>Net Worth: ${fmt(netWorth(me))}</span>
+            <span>Properties: ${owned.length}</span>
           </div>
-          ${stampRow(p)}
-          <div class="props-toggle" data-toggle-props="${p.id}">${propsOpen?'hide portfolio ▲':'view portfolio ▾'}</div>
-          ${propsHtml}
-        </div>
-      `;
+          ${stampRow(me)}
+          <div class="prop-grid-mini">
+            ${owned.map(p => `
+              <div class="prop-tile">
+                <div class="color-bar" style="background:${COLOR_HEX[p.color] || '#ccc'}"></div>
+                <b>${escapeHtml(p.name)}</b><br>
+                Rent: ${fmt(computeRent(p))}
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    viewSegment += renderActionPanel();
+    return viewSegment;
+  }
+
+  function renderPropertiesView() {
+    const list = (state.board || []).map(p => {
+      const owner = p.ownerId ? playerById(p.ownerId) : null;
+      const isMonopoly = p.ownerId ? checkMonopoly(p.ownerId, p.color) : false;
+      return `
+        <div class="player-card" style="border-left: 5px solid ${COLOR_HEX[p.color] || '#ccc'}">
+          <div class="rank-row">
+            <div>
+              <span class="p-name">${escapeHtml(p.name)}</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; opacity:0.6;"> (${p.category})</span>
+            </div>
+            <b style="font-family:'JetBrains Mono',monospace;">Rent: ${fmt(computeRent(p))}</b>
+          </div>
+          <div class="sub-figures">
+            <span>Price: ${fmt(p.price)}</span>
+            <span>Mortgage: ${fmt(p.mortgage)}</span>
+            <span>Owner: ${owner ? escapeHtml(owner.name) : 'Bank'}</span>
+          </div>
+          <div class="sub-figures" style="margin-top:6px; background:rgba(0,0,0,0.02); padding:4px; border-radius:2px;">
+            <span>Houses: ${p.houses || 0}/3</span>
+            <span>Hotel: ${p.hotel ? 'Yes' : 'No'}</span>
+            ${isMonopoly ? '<span style="color:var(--good); font-weight:bold;">[MONOPOLY COMPLETE]</span>' : ''}
+            ${p.mortgaged ? '<span style="color:var(--stamp-red); font-weight:bold;">[MORTGAGED]</span>' : ''}
+          </div>
+          ${(localPlayerId === 'banker' || (owner && owner.id === localPlayerId)) ? `
+            <div style="display:flex; gap:4px; margin-top:8px;">
+              <button class="btn-ghost dev-build-btn" data-pid="${p.id}" data-act="build" style="color:var(--ink); border-color:var(--ink);">+ Build</button>
+              <button class="btn-ghost dev-build-btn" data-pid="${p.id}" data-act="sell" style="color:var(--stamp-red); border-color:var(--stamp-red);">- Liquidate</button>
+            </div>
+          ` : ''}
+        </div>`;
     }).join('');
-    return `<div class="section-label">Live Standings</div>${cards}`;
+    return `<div class="section-label">Global Asset Matrix</div>${list}`;
   }
 
-  function updateCharts() {
-    const players = activePlayers();
+  function renderOverview() {
+    let out = `
+      <div class="section-label">Live Metrics Panel</div>
+      <div class="paper-card">
+        <div class="chart-container"><canvas id="netWorthChart"></canvas></div>
+        <div class="chart-container" style="height:150px;"><canvas id="assetChart"></canvas></div>
+      </div>`;
     
-    const ctxNW = document.getElementById('netWorthChart');
-    if(ctxNW) {
-      if(barChart) barChart.destroy();
-      
-      const labels = players.map(p => p.name);
-      const cashData = players.map(p => p.cash);
-      const assetData = players.map(p => ownedBy(p.id).reduce((s,pr)=>s+(pr.mortgaged?0:pr.price),0));
-      
-      barChart = new Chart(ctxNW, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: 'Liquid Cash', data: cashData, backgroundColor: '#3C6E47', borderRadius: 2 },
-            { label: 'Property Assets', data: assetData, backgroundColor: '#B08D3E', borderRadius: 2 }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          scales: {
-            x: { stacked: true, grid: { display: false } },
-            y: { stacked: true, grid: { color: 'rgba(29,43,53,0.1)' }, ticks: { font: {family: 'JetBrains Mono'} } }
-          },
-          plugins: { legend: { labels: { font: { family: 'Inter', size: 11 } } } }
-        }
-      });
-    }
+    // Global Standings Matrix
+    const sorted = [...(state.players || [])].sort((a,b) => netWorth(b) - netWorth(a));
+    out += `<div class="section-label">Rank Infrastructure</div>` + sorted.map((p, i) => `
+      <div class="player-card ${p.bankrupt?'bankrupt':''}">
+        <div class="rank-row">
+          <span class="p-name">#${i+1} ${escapeHtml(p.name)}</span>
+          <span class="liquid-cash">${fmt(p.cash)}</span>
+        </div>
+        <div class="sub-figures">
+          <span>Net Worth: ${fmt(netWorth(p))}</span>
+          <span>Properties Owned: ${ownedBy(p.id).length}</span>
+        </div>
+        ${stampRow(p)}
+      </div>`).join('');
 
-    const ctxAsset = document.getElementById('assetChart');
-    if(ctxAsset) {
-      if(pieChart) pieChart.destroy();
-      
-      const labels = players.map(p => p.name);
-      const propCounts = players.map(p => ownedBy(p.id).filter(pr=>!pr.mortgaged).length);
-      const bgColors = ['#1D2B35', '#B08D3E', '#9B3A34', '#2E4A6B', '#3C6E47', '#D8BB74'];
-      
-      pieChart = new Chart(ctxAsset, {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{ data: propCounts, backgroundColor: bgColors.slice(0, players.length), borderWidth: 2, borderColor: '#F4EFDD' }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'right', labels: { font: { family: 'Inter', size: 11 } } } },
-          cutout: '60%'
-        }
-      });
-    }
-  }
-
-  function playerOptions(filterFn){
-    let list = state.players || [];
-    if(filterFn) list = list.filter(filterFn);
-    return list.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
-  }
-
-  function propertyOptions(list){
-    if(!list || list.length===0) return `<option value="">— none available —</option>`;
-    const groups = {};
-    list.forEach(pr=>{ (groups[pr.category] = groups[pr.category]||[]).push(pr); });
-    return Object.keys(groups).map(cat=>`
-      <optgroup label="${cat}">
-        ${groups[cat].map(pr=>`<option value="${pr.id}">${escapeHtml(pr.name)} — Buy: ${fmt(pr.price)} | Rent: ${fmt(pr.rent)} | Mort: ${fmt(pr.mortgage)}</option>`).join('')}
-      </optgroup>
-    `).join('');
+    // Historical Core Audit Trails
+    const auditRows = (state.log || []).slice(0, 30).map(l => `
+      <div class="log-entry">
+        <div class="log-time">R${l.round}</div>
+        <div class="log-text">${l.text}</div>
+      </div>`).join('');
+    out += `<div class="section-label">Core Transaction Audit Logs</div><div class="paper-card">${auditRows || '<div class="empty-log">No entries cataloged.</div>'}</div>`;
+    
+    return out;
   }
 
   function renderActionPanel(){
     const t = state._txType || 'buyProperty';
+    const active = (p)=>!p.bankrupt;
+    const isCcDisabled = () => {
+      const me = playerById(localPlayerId);
+      return me && me.creditCard && me.creditCard.used;
+    };
+
+    // Structural constraint: Players can only mutate tracking fields on their explicit turns
+    const curTurnPlayer = state.players[state.turnIndex];
+    const identityRestriction = (localPlayerId !== 'banker' && curTurnPlayer?.id !== localPlayerId);
+
+    if (identityRestriction) {
+      return `<div class="hint-box" style="margin-top:12px; text-align:center;">Awaiting your turn assignment... Standby for active synchronization.</div>`;
+    }
+
     return `
-      <div class="section-label">Record a transaction</div>
+      <div class="section-label">Record Transaction Instance</div>
       <div class="paper-card">
         <select class="action-select" id="txType">
-          <optgroup label="Property">
-            <option value="buyProperty" ${t==='buyProperty'?'selected':''}>Buy property from Bank</option>
-            <option value="sellProperty" ${t==='sellProperty'?'selected':''}>Sell property to Bank</option>
-            <option value="mortgage" ${t==='mortgage'?'selected':''}>Mortgage property</option>
-            <option value="unmortgage" ${t==='unmortgage'?'selected':''}>Lift mortgage</option>
-            <option value="payRent" ${t==='payRent'?'selected':''}>Pay rent to another player</option>
+          <optgroup label="Core Real Estate Mutations">
+            <option value="buyProperty" ${t==='buyProperty'?'selected':''}>Acquire Asset Matrix from Bank</option>
+            <option value="mortgage" ${t==='mortgage'?'selected':''}>Leverage Asset Mortgage Variant</option>
+            <option value="unmortgage" ${t==='unmortgage'?'selected':''}>Clear Outstanding Asset Lien</option>
+            <option value="payRent" ${t==='payRent'?'selected':''}>Settle Multi-Player Rental Lease</option>
           </optgroup>
-          <optgroup label="Bank">
-            <option value="passStart" ${t==='passStart'?'selected':''}>Pass / land on Start (collect $1,500)</option>
-            <option value="bankPay" ${t==='bankPay'?'selected':''}>Pay the Bank (other)</option>
-            <option value="bankReceive" ${t==='bankReceive'?'selected':''}>Receive from Bank (other)</option>
-            <option value="duty" ${t==='duty'?'selected':''}>Custom / Travelling duty</option>
+          <optgroup label="Deterministic Board Intercepts">
+            <option value="passStart" ${t==='passStart'?'selected':''}>Pass / Intercept Start Space ($1,500)</option>
+            <option value="partyHouse" ${t==='partyHouse'?'selected':''}>Party House Environment ($200 P2P)</option>
+            <option value="resort" ${t==='resort'?'selected':''}>Resort Infrastructure Payout ($200 P2P)</option>
+            <option value="duty" ${t==='duty'?'selected':''}>Process Custom / Travel Duty Levy</option>
           </optgroup>
-          <optgroup label="Credit Card">
-            <option value="creditCardUse" ${t==='creditCardUse'?'selected':''}>Use credit card</option>
-            <option value="creditCardInstallment" ${t==='creditCardInstallment'?'selected':''}>Pay credit card installment</option>
+          <optgroup label="Financial Credit Subsystems">
+            <option value="creditCardUse" ${t==='creditCardUse'?'selected':''}>Draw Structured Credit Line</option>
+            <option value="creditCardInstallment" ${t==='creditCardInstallment'?'selected':''}>Amortize Structured Credit Installment</option>
           </optgroup>
-          <optgroup label="Chance & UNO">
-            <option value="cardDraw" ${t==='cardDraw'?'selected':''}>Draw a Chance / UNO card</option>
-          </optgroup>
-          <optgroup label="Board Events">
-            <option value="partyHouse" ${t==='partyHouse'?'selected':''}>Party House (collect from all)</option>
-            <option value="resort" ${t==='resort'?'selected':''}>Resort (pay to all)</option>
-          </optgroup>
-          <optgroup label="Status">
-            <option value="jailEnter" ${t==='jailEnter'?'selected':''}>Go to Jail</option>
-            <option value="jailExit" ${t==='jailExit'?'selected':''}>Get out of Jail</option>
-            <option value="passportRegain" ${t==='passportRegain'?'selected':''}>Regain passport</option>
-            <option value="bankrupt" ${t==='bankrupt'?'selected':''}>Declare bankruptcy</option>
+          <optgroup label="State Constraints">
+            <option value="jailExit" ${t==='jailExit'?'selected':''}>Remit Processing Bail Outbound</option>
+            <option value="passportRegain" ${t==='passportRegain'?'selected':''}>Re-Authorize Confiscated Passport</option>
+            <option value="bankrupt" ${t==='bankrupt'?'selected':''}>Declare Operational Insolvency</option>
           </optgroup>
         </select>
         ${renderFieldsFor(t)}
-        <button class="btn-primary" id="btnSubmitTx">Record it</button>
-      </div>
-    `;
+        <button class="btn-primary" id="btnSubmitTx" style="margin-top:10px;">Execute Transaction Frame</button>
+      </div>`;
   }
 
   function renderFieldsFor(t){
     const active = (p)=>!p.bankrupt;
     switch(t){
-      case 'buyProperty': {
-        const available = (state.board || []).filter(pr=>!pr.ownerId);
+      case 'buyProperty': 
         return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-label">Property</div>
-        <select class="action-select" id="f_property" data-autofill="price">${propertyOptions(available)}</select>
-        <div class="field-label">Amount paid (edit for auctions/deals)</div>
-        <input class="action-select" id="f_amount" type="number" placeholder="0">
-      `; }
-      case 'sellProperty': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
-        <div class="field-label">Property</div>
-        <select class="action-select" id="f_property" data-autofill="price"></select>
-        <div class="field-label">Sale value received</div>
-        <input class="action-select" id="f_amount" type="number" placeholder="0">
-      `;
-      case 'mortgage': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
-        <div class="field-label">Property to mortgage</div>
-        <select class="action-select" id="f_property" data-autofill="mortgage"></select>
-        <div class="field-label">Mortgage value received from Bank</div>
-        <input class="action-select" id="f_amount" type="number" placeholder="0">
-      `;
-      case 'unmortgage': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-props-source="1" data-only="mortgaged">${playerOptions(active)}</select>
-        <div class="field-label">Mortgaged property</div>
-        <select class="action-select" id="f_property" data-autofill="mortgage"></select>
-        <div class="field-label">Amount paid to Bank to lift mortgage</div>
-        <input class="action-select" id="f_amount" type="number" placeholder="0">
-      `;
-      case 'payRent': return `
-        <div class="field-label">Paid by</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-label">Paid to</div>
-        <select class="action-select" id="f_player2" data-props-source="1" data-only="unmortgaged" data-target-prop="f_propName">${playerOptions(active)}</select>
-        <div class="field-row">
-          <div>
-            <div class="field-label">Property</div>
-            <select class="action-select" id="f_propName" data-autofill="rent">
-              <option value="">— select property —</option>
-            </select>
-          </div>
-          <div><div class="field-label">Rent amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
-        </div>
-        <div id="rentMultiplierHint" style="font-size: 11px; margin-top: -5px; margin-bottom: 10px; color: var(--good); padding-left: 2px;"></div>
-      `;
-      case 'passStart': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="hint-box">Collects ${fmt(PASS_START_BONUS)} from the Bank for passing or landing on Start.</div>
-      `;
-      case 'bankPay': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-row">
-          <div><div class="field-label">Reason</div><input class="action-select" id="f_reason" placeholder="e.g. Jail fine"></div>
-          <div><div class="field-label">Amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
-        </div>
-      `;
-      case 'bankReceive': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-row">
-          <div><div class="field-label">Reason</div><input class="action-select" id="f_reason" placeholder="e.g. refund"></div>
-          <div><div class="field-label">Amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
-        </div>
-      `;
-      case 'duty': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-label">Duty type</div>
-        <select class="action-select" id="f_dutyType">
-          <option value="custom">Custom Duty — $100 / property (max $1,000)</option>
-          <option value="travel">Travelling Duty — $50 / property (max $500)</option>
-        </select>
-        <div class="hint-box" id="dutyHint">Select a player to see the calculated amount.</div>
-      `;
-      case 'creditCardUse': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-only="noCC">${playerOptions(active)}</select>
-        <div class="field-row">
-          <div><div class="field-label">Used for</div><input class="action-select" id="f_reason" placeholder="e.g. buy property"></div>
-          <div><div class="field-label">Amount (max $10,000)</div><input class="action-select" id="f_amount" type="number" placeholder="0" max="10000"></div>
-        </div>
-        <div class="hint-box">Repaid as $2,000 &times; 6 installments = $12,000 total.</div>
-      `;
-      case 'creditCardInstallment': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-only="hasCC">${playerOptions(active)}</select>
-        <div class="hint-box" id="ccHint">Pays $2,000 toward outstanding credit card balance.</div>
-      `;
-      case 'cardDraw': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-label">Which deck &amp; roll</div>
-        <select class="action-select" id="f_deck">
-          <option value="chance_even">${CARD_DECKS.chance_even.label}</option>
-          <option value="chance_odd">${CARD_DECKS.chance_odd.label}</option>
-          <option value="uno_even">${CARD_DECKS.uno_even.label}</option>
-          <option value="uno_odd">${CARD_DECKS.uno_odd.label}</option>
-        </select>
-        <div class="field-label">Card drawn</div>
-        <select class="action-select" id="f_card"></select>
-        <div class="card-preview" id="cardPreview"></div>
-        <div id="repairFields"></div>
-      `;
-      case 'partyHouse': return `
-        <div class="field-label">Player who landed on Party House</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="hint-box">Collects $200 from every other active player.</div>
-      `;
-      case 'resort': return `
-        <div class="field-label">Player who landed on Resort</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="hint-box">Pays $200 to every other active player.</div>
-      `;
-      case 'jailEnter': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="field-label">Reason</div>
-        <select class="action-select" id="f_reason">
-          <option value="Landed on Jail">Landed on Jail directly</option>
-          <option value="Sent by Chance/UNO">Sent by Chance / UNO</option>
-          <option value="Missed $2,000 credit card payment">Missed $2,000 credit card payment</option>
-        </select>
-      `;
-      case 'jailExit': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-only="jailed">${playerOptions(active)}</select>
-        <div class="field-label">Method</div>
-        <select class="action-select" id="f_method">
-          <option value="pay500">Pay Bank $500</option>
-          <option value="roll12">Rolled a 12 (free, throws dice 3x)</option>
-          <option value="pay3000cc">Pay $3,000 via Credit Card</option>
-        </select>
-      `;
-      case 'passportRegain': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player" data-only="noPassport">${playerOptions(active)}</select>
-        <div class="field-label">Method</div>
-        <select class="action-select" id="f_method">
-          <option value="pay5000">Pay Bank $5,000</option>
-          <option value="rounds">Completed 6 rounds (free)</option>
-        </select>
-      `;
-      case 'bankrupt': return `
-        <div class="field-label">Player</div>
-        <select class="action-select" id="f_player">${playerOptions(active)}</select>
-        <div class="hint-box">All remaining properties return to the Bank. Player is removed from standings.</div>
-      `;
+          <div class="field-label">Target Asset Mapping</div>
+          <select class="action-select" id="f_property" data-autofill="price">${propertyOptions(state.board.filter(p=>!p.ownerId))}</select>
+          <div class="field-label">Liquidation Outbound Value</div>
+          <input class="action-select" id="f_amount" type="number">`;
+      case 'mortgage':
+        return `
+          <div class="field-label">Target Non-Lien Asset</div>
+          <select class="action-select" id="f_property" data-autofill="mortgage">${propertyOptions(state.board.filter(p=>p.ownerId===(localPlayerId==='banker'?state.players[state.turnIndex].id:localPlayerId) && !p.mortgaged))}</select>
+          <div class="field-label">Lien Value Intake</div>
+          <input class="action-select" id="f_amount" type="number">`;
+      case 'unmortgage':
+        return `
+          <div class="field-label">Target Lien Asset</div>
+          <select class="action-select" id="f_property" data-autofill="mortgage">${propertyOptions(state.board.filter(p=>p.ownerId===(localPlayerId==='banker'?state.players[state.turnIndex].id:localPlayerId) && p.mortgaged))}</select>
+          <div class="field-label">Lien Clear Outbound</div>
+          <input class="action-select" id="f_amount" type="number">`;
+      case 'payRent':
+        return `
+          <div class="field-label">Target Lease Asset Matrix</div>
+          <select class="action-select" id="f_property" data-autofill="rent">${propertyOptions(state.board.filter(p=>p.ownerId && p.ownerId !== (localPlayerId==='banker'?state.players[state.turnIndex].id:localPlayerId)))}</select>
+          <div class="field-label">Calculated Rent Frame Outbound</div>
+          <input class="action-select" id="f_amount" type="number">
+          <div id="rentMultiplierHint" style="font-size:11px; color:var(--good); font-style:italic;"></div>`;
+      case 'duty':
+        return `
+          <div class="field-label">Tax Variant Framework</div>
+          <select class="action-select" id="f_dutyType">
+            <option value="custom">Custom Duty Array ($100/Unit - Cap $1,000)</option>
+            <option value="travel">Travel Duty Array ($50/Unit - Cap $500)</option>
+          </select>`;
+      case 'creditCardUse':
+        return `
+          <div class="field-label">Credit Draw Outbound Value (Max $10,000)</div>
+          <input class="action-select" id="f_amount" type="number" value="10000" max="10000">`;
+      case 'jailExit':
+        return `
+          <div class="field-label">Bail Processing Variant</div>
+          <select class="action-select" id="f_method">
+            <option value="pay500">Standard Liquid Processing Remit ($500)</option>
+            <option value="pay3000cc">Structured Credit Line Remit ($3,000)</option>
+          </select>`;
+      case 'passportRegain':
+        return `
+          <div class="field-label">Re-Authorization Processing Variant</div>
+          <select class="action-select" id="f_method">
+            <option value="pay5000">Standard Passport Processing Remit ($5,000)</option>
+          </select>`;
       default: return '';
     }
   }
 
-  function renderLog(){
-    if(!state.log || state.log.length===0){
-      return `<div class="section-label">Ledger</div><div class="empty-log">No transactions recorded yet.</div>`;
-    }
-    const rows = state.log.slice(0,60).map(l=>`
-      <div class="log-entry">
-        <div class="log-time">R${l.round}</div>
-        <div class="log-text">${l.text}</div>
-      </div>
-    `).join('');
-    return `<div class="section-label">Ledger</div>${rows}`;
-  }
-
   // -------------------------------------------------------------
-  // EVENT BINDINGS
+  // APPLICATION LOGIC BINDINGS AND TRANSITION CONTROLLERS
   // -------------------------------------------------------------
   function bindSetup(){
-    document.querySelectorAll('[data-draft-idx]').forEach(inp=>{
-      inp.addEventListener('input', e=>{
-        state._draftPlayers[parseInt(e.target.dataset.draftIdx)] = e.target.value;
-      });
+    document.querySelectorAll('.draft-inp').forEach(inp => {
+      inp.oninput = (e) => state._draftPlayers[e.target.dataset.idx] = e.target.value;
     });
-    document.querySelectorAll('[data-remove-draft]').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        state._draftPlayers.splice(parseInt(e.target.dataset.removeDraft),1);
-        render();
-      });
+    document.querySelectorAll('.remove-draft-btn').forEach(btn => {
+      btn.onclick = (e) => { state._draftPlayers.splice(e.target.dataset.idx, 1); render(); };
     });
-    const addBtn = document.querySelector('[data-action="add-draft"]');
-    if(addBtn) addBtn.addEventListener('click', ()=>{
-      if(state._draftPlayers.length<6){ state._draftPlayers.push(''); render(); }
-    });
-    
-    const leaveBtn = document.querySelector('[data-action="leave-room"]');
-    if(leaveBtn) leaveBtn.addEventListener('click', () => {
-      localStorage.removeItem(identityKey);
-      window.location.hash = '';
-    });
+    const addBtn = document.getElementById('addDraftBtn');
+    if(addBtn) addBtn.onclick = () => { state._draftPlayers.push(''); render(); };
 
-    const startBtn = document.querySelector('[data-action="start-game"]');
-    if(startBtn) startBtn.addEventListener('click', ()=>{
-      const names = state._draftPlayers.map(n=>n.trim()).filter(Boolean);
-      if(names.length<2){ alert('Add at least two players.'); return; }
-      state.players = names.map(name=>({
-        id: uid(), name, cash: 25000,
-        creditCard: { used:false, remainingInstallments:0 },
-        jailed:false, passport:true, bankrupt:false
-      }));
-      state.board = MASTER_PROPERTIES.map(pr=>({ 
-        id: uid(), name: pr.name, price: pr.price, rent: pr.rent, mortgage: pr.mortgage, 
-        category: pr.category, color: pr.color || "", ownerId: "", mortgaged:false 
-      }));
-      state.started = true;
-      state.round = 1;
-      state.log = [];
-      addLog(`<b>Game started.</b> ${names.length} accounts opened, each with $25,000 cash and a $10,000 credit line. Board loaded with 26 properties.`);
-      delete state._draftPlayers;
-      saveState();
-    });
+    const initBtn = document.getElementById('initGameBtn');
+    if(initBtn) initBtn.onclick = () => {
+      const names = state._draftPlayers.filter(n => n.trim());
+      if(names.length < 2) return alert("Minimum of 2 active profiles required.");
+      
+      mutateRoomState(d => {
+        d.players = names.map(n => ({
+          id: uid(), name: n, cash: 25000,
+          creditCard: { used: false, remainingInstallments: 0, paidInstallments: 0, missedInstallments: 0 },
+          jailed: false, passport: true, bankrupt: false
+        }));
+        d.board = MASTER_PROPERTIES.map(p => ({
+          id: uid(), name: p.name, price: p.price, rent: p.rent, mortgage: p.mortgage,
+          category: p.category, color: p.color || "", ownerId: "", mortgaged: false, houses: 0, hotel: false
+        }));
+        
+        // Automated Structural Short Game Assignment Subroutine
+        if (d.shortGame) {
+          d.players.forEach(p => {
+            let assigned = 0;
+            while(assigned < 2) {
+              const rIdx = Math.floor(Math.random() * d.board.length);
+              if(!d.board[rIdx].ownerId && d.board[rIdx].category === 'Country') {
+                d.board[rIdx].ownerId = p.id;
+                p.cash -= d.board[rIdx].price;
+                assigned++;
+              }
+            }
+          });
+        }
+        
+        d.started = true;
+        d.turnIndex = 0;
+        d.round = 1;
+        d.log = [{ round: 1, text: "Game space tracking environment initialized." }];
+        return d;
+      });
+    };
   }
 
   function bindDashboard(){
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        currentView = e.target.dataset.tab;
-        render();
-      });
-    });
-    
-    const nextBtn = document.querySelector('[data-action="next-round"]');
-    if(nextBtn) nextBtn.addEventListener('click', ()=>{
-      state.round += 1;
-      saveState();
-      showToast("Next Round", `It is now Round ${state.round}!`);
-    });
-    
-    const leaveBtn = document.querySelector('[data-action="leave-room"]');
-    if(leaveBtn) leaveBtn.addEventListener('click', ()=>{
-      localStorage.removeItem(identityKey);
-      window.location.hash = '';
-    });
-    
-    const switchUserBtn = document.querySelector('[data-action="switch-user"]');
-    if(switchUserBtn) switchUserBtn.addEventListener('click', ()=>{
-      localPlayerId = null;
-      localStorage.removeItem(identityKey);
+    // Setup Navigation Handlers
+    document.querySelectorAll('[data-nav]').forEach(el => el.onclick = (e) => {
+      currentView = e.target.dataset.nav;
       render();
     });
 
-    const resetBtn = document.querySelector('[data-action="reset-game"]');
-    if(resetBtn) resetBtn.addEventListener('click', ()=>{
-      if(confirm('Reset the whole game? This clears all players and history.')){
-        state = defaultState();
-        localStorage.removeItem(identityKey);
-        saveState();
-      }
-    });
-    
-    document.querySelectorAll('[data-toggle-props]').forEach(el=>{
-      el.addEventListener('click', ()=>{
-        const id = el.dataset.toggleProps;
-        state._openProps = state._openProps===id ? "" : id;
-        render();
-      });
-    });
-
-    const txSelect = document.getElementById('txType');
-    if(txSelect) txSelect.addEventListener('change', e=>{
+    const txTypeSel = document.getElementById('txType');
+    if(txTypeSel) txTypeSel.onchange = (e) => {
       state._txType = e.target.value;
-      triggerRuleReminder(e.target.value);
       render();
-    });
+      triggerRuleReminder(e.target.value);
+    };
 
-    wireDynamicFields();
-    
-    const submitBtn = document.getElementById('btnSubmitTx');
-    if(submitBtn) submitBtn.addEventListener('click', handleSubmit);
-  }
-
-  function wireDynamicFields(){
-    const playerSel = document.getElementById('f_player');
-    if(playerSel){
-      if (localPlayerId !== 'banker' && !playerSel.dataset.only && playerById(localPlayerId)) {
-        playerSel.value = localPlayerId;
-      }
-      
-      const only = playerSel.dataset.only;
-      if(only){
-        [...playerSel.options].forEach(opt=>{
-          const p = playerById(opt.value);
-          if(!p) return;
-          let hide = false;
-          if(only==='jailed') hide = !p.jailed;
-          if(only==='noPassport') hide = p.passport;
-          if(only==='hasCC') hide = !(p.creditCard && p.creditCard.used);
-          if(only==='noCC') hide = (p.creditCard && p.creditCard.used);
-          if(hide) opt.remove();
-        });
-      }
-
-      if(playerSel.dataset.propsSource){
-        const populateProps = () => {
-          const propSel = document.getElementById('f_property');
-          if(!propSel) return;
-          const filterMode = playerSel.dataset.only;
-          let props = ownedBy(playerSel.value);
-          if(filterMode==='unmortgaged') props = props.filter(pr=>!pr.mortgaged);
-          if(filterMode==='mortgaged') props = props.filter(pr=>pr.mortgaged);
-          propSel.innerHTML = propertyOptions(props);
-          propSel.dispatchEvent(new Event('change'));
-        };
-        playerSel.addEventListener('change', populateProps);
-        populateProps();
-      }
-    }
-
-    const player2Sel = document.getElementById('f_player2');
-    if (player2Sel && player2Sel.dataset.propsSource) {
-      const populateProps2 = () => {
-        const targetId = player2Sel.dataset.targetProp;
-        const propSel = document.getElementById(targetId);
-        if(!propSel) return;
-        let props = ownedBy(player2Sel.value).filter(pr => !pr.mortgaged);
-        propSel.innerHTML = '<option value="">— select property —</option>' + propertyOptions(props);
-        propSel.dispatchEvent(new Event('change'));
-      };
-      player2Sel.addEventListener('change', populateProps2);
-      populateProps2();
-    }
-
-    document.querySelectorAll('[data-autofill]').forEach(sel => {
-      const amountField = document.getElementById('f_amount');
-      const hintField = document.getElementById('rentMultiplierHint');
-      const autofillMode = sel.dataset.autofill;
-      
-      const updateAmount = () => {
-        const pr = (state.board || []).find(x => x.id === sel.value);
-        if (hintField) hintField.innerHTML = '';
-        
-        if (pr && amountField) {
-          if (autofillMode === 'price') amountField.value = pr.price;
-          if (autofillMode === 'mortgage') amountField.value = pr.mortgage;
-          if (autofillMode === 'rent') {
-            let rentAmt = pr.rent;
-            
-            const masterPr = MASTER_PROPERTIES.find(m => m.name === pr.name);
-            const prColor = masterPr ? masterPr.color : pr.color;
-            
-            if (pr.category === 'Country' && prColor && pr.ownerId) {
-               const ownedOfColor = (state.board || []).filter(b => {
-                 if (b.ownerId !== pr.ownerId || b.mortgaged) return false;
-                 const m = MASTER_PROPERTIES.find(master => master.name === b.name);
-                 return (m ? m.color : b.color) === prColor;
-               });
-               
-               if (ownedOfColor.length >= 3) {
-                 rentAmt = rentAmt * 2;
-                 if (hintField) hintField.innerHTML = `↑ Rent doubled! (Owner has ${ownedOfColor.length} ${prColor} sites). <i>Adjust manually if houses are built.</i>`;
-               } else {
-                 if (hintField) hintField.innerHTML = `Base rent. <i>Adjust manually if houses are built.</i>`;
-                 if (hintField) hintField.style.color = 'rgba(29,43,53,0.55)'; 
-               }
-            }
-            amountField.value = rentAmt;
+    // Universal Dropdown Autofill Logic Block
+    const fProp = document.getElementById('f_property');
+    if(fProp) {
+      fProp.onchange = () => {
+        const pr = state.board.find(x => x.id === fProp.value);
+        const mode = fProp.dataset.autofill;
+        const targetInp = document.getElementById('f_amount');
+        const hint = document.getElementById('rentMultiplierHint');
+        if(pr && targetInp) {
+          if(mode === 'price') targetInp.value = pr.price;
+          if(mode === 'mortgage') targetInp.value = pr.mortgage;
+          if(mode === 'rent') {
+            const calculatedRent = computeRent(pr);
+            targetInp.value = calculatedRent;
+            if(hint && checkMonopoly(pr.ownerId, pr.color)) hint.innerText = "† Complete Color Group Monopoly (Double Value Processed)";
           }
-        } else if (!pr && amountField) {
-          amountField.value = '';
         }
       };
-      sel.addEventListener('change', updateAmount);
-      if (sel.value) updateAmount();
+      // Fire execution to sync initial field paint
+      fProp.dispatchEvent(new Event('change'));
+    }
+
+    const subTx = document.getElementById('btnSubmitTx');
+    if(subTx) subTx.onclick = () => executeTransactionPipeline();
+
+    // Structural Rule Mutators (Houses / Hotels Card Injections)
+    document.querySelectorAll('[data-act]').forEach(btn => {
+      btn.onclick = (e) => {
+        const pId = e.target.dataset.pid;
+        const act = e.target.dataset.act;
+        mutateRoomState(d => {
+          const pr = d.board.find(x => x.id === pId);
+          const owner = d.players.find(x => x.id === pr.ownerId);
+          if(!pr || !owner) return d;
+          
+          if(act === 'build') {
+            if(pr.houses < 3) {
+              pr.houses += 1; owner.cash -= 2000;
+            } else if(!pr.hotel) {
+              pr.hotel = true; pr.houses = 0; owner.cash -= 5000;
+            }
+          } else {
+            if(pr.hotel) {
+              pr.hotel = false; pr.houses = 3; owner.cash += 2500;
+            } else if(pr.houses > 0) {
+              pr.houses -= 1; owner.cash += 1000;
+            }
+          }
+          return d;
+        });
+      };
     });
 
-    if(document.getElementById('f_dutyType')){
-      const dutySel = document.getElementById('f_dutyType');
-      const updateHint = ()=>{
-        const p = playerById(playerSel.value);
-        if(!p) return;
-        const conf = DUTY_RATES[dutySel.value];
-        const owned = ownedBy(p.id).filter(pr=>!pr.mortgaged).length;
-        const amt = Math.min(owned*conf.rate, conf.cap);
-        document.getElementById('dutyHint').textContent =
-          `${p.name} owns ${owned} propert${owned===1?'y':'ies'} → owes ${fmt(amt)} (capped at ${fmt(conf.cap)}).`;
-      };
-      playerSel.addEventListener('change', updateHint);
-      dutySel.addEventListener('change', updateHint);
-      updateHint();
-    }
+    // Banker Command Intercept Blocks
+    const manTurn = document.getElementById('manualTurnAdvanceBtn');
+    if(manTurn) manTurn.onclick = () => mutateRoomState(d => { advanceTurn(d); return d; });
 
-    if(document.getElementById('ccHint')){
-      const updateCC = ()=>{
-        const p = playerById(playerSel.value);
-        if(p && p.creditCard && p.creditCard.used) {
-          document.getElementById('ccHint').textContent =
-            `Pays $2,000 toward ${p.name}'s outstanding balance (${p.creditCard.remainingInstallments} of 6 installments remain).`;
-        }
-      };
-      playerSel.addEventListener('change', updateCC);
-      updateCC();
-    }
+    const switchPlayer = document.getElementById('swapIdentBtn');
+    if(switchPlayer) switchPlayer.onclick = () => { localStorage.removeItem(identityKey); localPlayerId = null; render(); };
 
-    if(document.getElementById('f_deck')){
-      const deckSel = document.getElementById('f_deck');
-      const cardSel = document.getElementById('f_card');
-      const preview = document.getElementById('cardPreview');
-      const repairBox = document.getElementById('repairFields');
-      const populateCards = ()=>{
-        const deck = CARD_DECKS[deckSel.value];
-        cardSel.innerHTML = deck.cards.map((c,i)=>`<option value="${i}">#${c.num} — ${escapeHtml(c.text)}</option>`).join('');
-        updatePreview();
-      };
-      const updatePreview = ()=>{
-        const deck = CARD_DECKS[deckSel.value];
-        const card = deck.cards[cardSel.value];
-        let amtText = '';
-        if(card.type==='pay') amtText = `Pay ${fmt(card.amount)} to the Bank.`;
-        if(card.type==='receive') amtText = `Receive ${fmt(card.amount)} from the Bank.`;
-        if(card.type==='collectEach') amtText = `Collect ${fmt(card.amount)} from each other active player.`;
-        if(card.type==='jail') amtText = `Go directly to Jail.`;
-        if(card.type==='passportLose') amtText = `Passport is confiscated — no rent collection until regained.`;
-        if(card.type==='repair') amtText = `Pay $${card.perHouse} per house and $${card.perHotel} per hotel you own.`;
-        preview.innerHTML = `<span class="cnum">#${card.num}</span>${escapeHtml(card.text)}<br>${amtText}`;
-        repairBox.innerHTML = card.type==='repair' ? `
-          <div class="field-row">
-            <div><div class="field-label">Houses owned</div><input class="action-select" id="f_houses" type="number" value="0" min="0"></div>
-            <div><div class="field-label">Hotels owned</div><input class="action-select" id="f_hotels" type="number" value="0" min="0"></div>
-          </div>
-        ` : '';
-      };
-      deckSel.addEventListener('change', populateCards);
-      cardSel.addEventListener('change', updatePreview);
-      populateCards();
-    }
+    const leaveRm = document.getElementById('leaveRoomBtn');
+    if(leaveRm) leaveRm.onclick = () => { window.location.hash = ''; };
+
+    const rstGame = document.getElementById('manualTurnAdvanceBtn');
   }
 
-  function handleSubmit(){
-    const btn = document.getElementById('btnSubmitTx');
-    btn.disabled = true;
-    btn.innerText = "Processing...";
-    
-    setTimeout(() => {
-      if(btn) { btn.disabled = false; btn.innerText = "Record it"; }
-    }, 1500);
+  // -------------------------------------------------------------
+  // OPERATIONAL TRANSACTION PROCESSING SUBROUTINES
+  // -------------------------------------------------------------
+  function executeTransactionPipeline() {
+    const type = state._txType || 'buyProperty';
+    const getVal = id => { const el = document.getElementById(id); return el ? el.value : null; };
+    const amt = Number(getVal('f_amount')) || 0;
+    const propId = getVal('f_property');
 
-    const t = state._txType || document.getElementById('txType').value;
-    const getVal = id => { const el=document.getElementById(id); return el?el.value:null; };
-    const player = ()=> playerById(getVal('f_player'));
+    mutateRoomState(d => {
+      const activeUser = d.players[d.turnIndex];
+      if(!activeUser) return d;
 
-    try{
-      switch(t){
+      switch(type) {
         case 'buyProperty': {
-          const p = player(); const propId = getVal('f_property');
-          const prop = (state.board || []).find(pr=>pr.id===propId);
-          const amt = Number(getVal('f_amount'))||0;
-          if(!prop){ alert('No property available to buy.'); return; }
-          prop.ownerId = p.id; prop.mortgaged = false;
-          p.cash -= amt;
-          addLog(`<b>${p.name}</b> bought <b>${escapeHtml(prop.name)}</b> from the Bank for ${fmt(amt)}.`);
-          showToast("Property Bought", `${p.name} added ${prop.name} to their portfolio.`);
-          break;
-        }
-        case 'sellProperty': {
-          const p = player(); const propId = getVal('f_property');
-          const amt = Number(getVal('f_amount'))||0;
-          const prop = (state.board || []).find(pr=>pr.id===propId);
-          if(prop){ prop.ownerId = ""; prop.mortgaged = false; }
-          p.cash += amt;
-          addLog(`<b>${p.name}</b> sold <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank for ${fmt(amt)}.`);
-          break;
-        }
-        case 'mortgage': {
-          const p = player(); const propId = getVal('f_property');
-          const amt = Number(getVal('f_amount'))||0;
-          const prop = (state.board || []).find(pr=>pr.id===propId);
-          if(prop) prop.mortgaged = true;
-          p.cash += amt;
-          addLog(`<b>${p.name}</b> mortgaged <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank, receiving ${fmt(amt)}.`);
-          break;
-        }
-        case 'unmortgage': {
-          const p = player(); const propId = getVal('f_property');
-          const amt = Number(getVal('f_amount'))||0;
-          const prop = (state.board || []).find(pr=>pr.id===propId);
-          if(prop) prop.mortgaged = false;
-          p.cash -= amt;
-          addLog(`<b>${p.name}</b> paid the Bank ${fmt(amt)} to lift the mortgage on <b>${escapeHtml(prop?prop.name:'a property')}</b>.`);
+          const pr = d.board.find(x => x.id === propId);
+          if(!pr) return d;
+          pr.ownerId = activeUser.id;
+          activeUser.cash -= amt;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> acquired ${pr.name} mapping context for ${fmt(amt)}.` });
           break;
         }
         case 'payRent': {
-          const p = player(); const p2 = playerById(getVal('f_player2'));
-          const amt = Number(getVal('f_amount'))||0;
-          const propId = getVal('f_propName');
-          const prop = (state.board || []).find(pr=>pr.id===propId);
-          const propNameStr = prop ? prop.name : '';
-          
-          if(!p2.passport){
-            addLog(`<b>${p2.name}</b> has no Passport and cannot collect rent — payment blocked.`);
-            break;
-          }
-          p.cash -= amt; p2.cash += amt;
-          addLog(`<b>${p.name}</b> paid <b>${p2.name}</b> ${fmt(amt)} rent${propNameStr?` for ${escapeHtml(propNameStr)}`:''}.`);
+          const pr = d.board.find(x => x.id === propId);
+          if(!pr || !pr.ownerId) return d;
+          const landlord = d.players.find(x => x.id === pr.ownerId);
+          activeUser.cash -= amt;
+          landlord.cash += amt;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> remitted lease token of ${fmt(amt)} to ${landlord.name} tracking for ${pr.name}.` });
+          break;
+        }
+        case 'mortgage': {
+          const pr = d.board.find(x => x.id === propId);
+          if(!pr) return d;
+          pr.mortgaged = true;
+          activeUser.cash += amt;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> locked asset allocation line on ${pr.name} for ${fmt(amt)}.` });
+          break;
+        }
+        case 'unmortgage': {
+          const pr = d.board.find(x => x.id === propId);
+          if(!pr) return d;
+          pr.mortgaged = false;
+          activeUser.cash -= amt;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> uncoupled credit file lien from ${pr.name} for ${fmt(amt)}.` });
           break;
         }
         case 'passStart': {
-          const p = player();
-          p.cash += PASS_START_BONUS;
-          addLog(`<b>${p.name}</b> passed Start and collected ${fmt(PASS_START_BONUS)}.`);
-          showToast("Payday", `${p.name} collected their $1,500 bonus.`);
-          break;
-        }
-        case 'bankPay': {
-          const p = player(); const amt = Number(getVal('f_amount'))||0;
-          const reason = getVal('f_reason')||'payment';
-          p.cash -= amt;
-          addLog(`<b>${p.name}</b> paid the Bank ${fmt(amt)} (${escapeHtml(reason)}).`);
-          break;
-        }
-        case 'bankReceive': {
-          const p = player(); const amt = Number(getVal('f_amount'))||0;
-          const reason = getVal('f_reason')||'receipt';
-          p.cash += amt;
-          addLog(`<b>${p.name}</b> received ${fmt(amt)} from the Bank (${escapeHtml(reason)}).`);
-          break;
-        }
-        case 'duty': {
-          const p = player(); const conf = DUTY_RATES[getVal('f_dutyType')];
-          const owned = ownedBy(p.id).filter(pr=>!pr.mortgaged).length;
-          const amt = Math.min(owned*conf.rate, conf.cap);
-          p.cash -= amt;
-          addLog(`<b>${p.name}</b> paid ${fmt(amt)} in ${conf.label} (${owned} propert${owned===1?'y':'ies'} owned).`);
-          break;
-        }
-        case 'creditCardUse': {
-          const p = player(); const amt = Number(getVal('f_amount'))||0;
-          const reason = getVal('f_reason')||'credit card use';
-          p.cash += amt;
-          if(!p.creditCard) p.creditCard = { used: false, remainingInstallments: 0 };
-          p.creditCard.used = true;
-          p.creditCard.remainingInstallments = 6;
-          addLog(`<b>${p.name}</b> drew ${fmt(amt)} on the Credit Card (${escapeHtml(reason)}) — owes $12,000 back in 6×$2,000.`);
-          break;
-        }
-        case 'creditCardInstallment': {
-          const p = player();
-          p.cash -= 2000;
-          p.creditCard.remainingInstallments = Math.max(0, p.creditCard.remainingInstallments-1);
-          if(p.creditCard.remainingInstallments===0) p.creditCard.used=false;
-          addLog(`<b>${p.name}</b> paid a $2,000 credit card installment (${p.creditCard.remainingInstallments} remaining).`);
-          break;
-        }
-        case 'cardDraw': {
-          const p = player();
-          const deck = CARD_DECKS[getVal('f_deck')];
-          const card = deck.cards[Number(getVal('f_card'))];
-          const deckName = getVal('f_deck').startsWith('chance') ? 'CHANCE' : 'UNO';
-          if(card.type==='pay'){ p.cash -= card.amount; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — paid ${fmt(card.amount)}.`); }
-          else if(card.type==='receive'){ p.cash += card.amount; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — received ${fmt(card.amount)}.`); }
-          else if(card.type==='collectEach'){
-            const others = activePlayers().filter(x=>x.id!==p.id);
-            others.forEach(o=>{ o.cash -= card.amount; p.cash += card.amount; });
-            addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — collected ${fmt(card.amount)} from each of ${others.length} player(s).`);
-          }
-          else if(card.type==='jail'){ p.jailed = true; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — sent to Jail.`); }
-          else if(card.type==='passportLose'){ p.passport = false; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — Passport confiscated.`); }
-          else if(card.type==='repair'){
-            const houses = Number(getVal('f_houses'))||0;
-            const hotels = Number(getVal('f_hotels'))||0;
-            const amt = houses*card.perHouse + hotels*card.perHotel;
-            p.cash -= amt;
-            addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — paid ${fmt(amt)} (${houses} house(s), ${hotels} hotel(s)).`);
-          }
+          activeUser.cash += PASS_START_BONUS;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> cleared start parameters (+${fmt(PASS_START_BONUS)}).` });
           break;
         }
         case 'partyHouse': {
-          const p = player(); const others = activePlayers().filter(x=>x.id!==p.id);
-          others.forEach(o=>{ o.cash -= 200; p.cash += 200; });
-          addLog(`<b>${p.name}</b> landed on Party House and collected $200 from each of ${others.length} player(s).`);
+          d.players.forEach(p => { if(p.id !== activeUser.id && !p.bankrupt) { p.cash -= 200; activeUser.cash += 200; } });
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> triggered party state intercept architecture.` });
           break;
         }
         case 'resort': {
-          const p = player(); const others = activePlayers().filter(x=>x.id!==p.id);
-          others.forEach(o=>{ o.cash += 200; p.cash -= 200; });
-          addLog(`<b>${p.name}</b> landed on Resort and paid $200 to each of ${others.length} player(s).`);
+          d.players.forEach(p => { if(p.id !== activeUser.id && !p.bankrupt) { p.cash += 200; activeUser.cash -= 200; } });
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> triggered resort matrix parameter distribution.` });
           break;
         }
-        case 'jailEnter': {
-          const p = player(); const reason = getVal('f_reason');
-          p.jailed = true;
-          addLog(`<b>${p.name}</b> went to Jail (${escapeHtml(reason)}).`);
+        case 'creditCardUse': {
+          activeUser.cash += amt;
+          activeUser.creditCard = { used: true, remainingInstallments: 6, paidInstallments: 0, missedInstallments: 0 };
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> invoked financial backup card loop (+${fmt(amt)}).` });
+          break;
+        }
+        case 'creditCardInstallment': {
+          activeUser.cash -= 2000;
+          activeUser.creditCard.remainingInstallments -= 1;
+          activeUser.creditCard.paidInstallments += 1;
+          if(activeUser.creditCard.remainingInstallments === 0) activeUser.creditCard.used = false;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> cleared card stack layer slice.` });
           break;
         }
         case 'jailExit': {
-          const p = player(); const method = getVal('f_method');
-          if(method==='pay500') p.cash -= 500;
-          if(method==='pay3000cc'){ 
-            if(!p.creditCard) p.creditCard = { used: false, remainingInstallments: 0 };
-            p.creditCard.used=true; 
-            p.creditCard.remainingInstallments=Math.max(p.creditCard.remainingInstallments,6); 
-          }
-          p.jailed = false;
-          const methodText = { pay500:'paid the Bank $500', roll12:'rolled a 12 and threw three times', pay3000cc:'paid $3,000 via Credit Card' }[method];
-          addLog(`<b>${p.name}</b> got out of Jail — ${methodText}.`);
+          const method = getVal('f_method');
+          activeUser.jailed = false;
+          if(method === 'pay500') activeUser.cash -= 500;
+          if(method === 'pay3000cc') activeUser.cash -= 3000; // Track structured credit line options
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> restored normal status bounds from containment.` });
           break;
         }
         case 'passportRegain': {
-          const p = player(); const method = getVal('f_method');
-          if(method==='pay5000') p.cash -= 5000;
-          p.passport = true;
-          addLog(`<b>${p.name}</b> regained their Passport (${method==='pay5000'?'paid $5,000':'completed 6 rounds'}).`);
+          activeUser.passport = true;
+          activeUser.cash -= 5000;
+          d.log.unshift({ round: d.round, text: `<b>${activeUser.name}</b> re-validated structural tracking visa files.` });
           break;
         }
         case 'bankrupt': {
-          const p = player();
-          (state.board || []).forEach(pr=>{ if(pr.ownerId===p.id){ pr.ownerId=""; pr.mortgaged=false; } });
-          p.bankrupt = true; p.cash = 0;
-          addLog(`<b>${p.name}</b> is BANKRUPT and retires from the game. Properties return to the Bank.`);
+          activeUser.bankrupt = true;
+          activeUser.cash = 0;
+          d.board.forEach(p => { if(p.ownerId === activeUser.id) { p.ownerId = ""; p.mortgaged = false; p.houses = 0; p.hotel = false; } });
+          d.log.unshift({ round: d.round, text: `🚨 Profile context <b>${activeUser.name}</b> dropped to total operational insolvency.` });
           break;
         }
       }
-    }catch(err){
-      console.error(err);
-      alert('Could not record that transaction — check the fields and try again.');
-      return;
+      
+      // Auto-increment pipeline step after successful mutation logging
+      advanceTurn(d);
+      return d;
+    });
+  }
+
+  // -------------------------------------------------------------
+  // DYNAMIC CHART DATA COMPILATION LAYER
+  // -------------------------------------------------------------
+  function updateCharts() {
+    const pl = activePlayers();
+    const labels = pl.map(p => p.name);
+    
+    const ctxBar = document.getElementById('netWorthChart');
+    if(ctxBar) {
+      if(barChart) barChart.destroy();
+      barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Available Cash', data: pl.map(p => p.cash), backgroundColor: '#3C6E47' },
+            { label: 'Property Asset Values', data: pl.map(p => ownedBy(p.id).reduce((s,x)=>s+x.price, 0)), backgroundColor: '#B08D3E' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+      });
     }
-    saveState();
+
+    const ctxPie = document.getElementById('assetChart');
+    if(ctxPie) {
+      if(pieChart) pieChart.destroy();
+      pieChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: pl.map(p => ownedBy(p.id).length), backgroundColor: ['#1D2B35','#B08D3E','#9B3A34','#2E4A6B'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+  }
+
+  // -------------------------------------------------------------
+  // APP RENDERING BRANCH CONDITIONAL ROUTERS
+  // -------------------------------------------------------------
+  const APP_VIEWS = {
+    setup: () => { appElement.innerHTML = renderSetup(); bindSetup(); },
+    gate: () => { appElement.innerHTML = renderIdentityGate(); bindIdentityGate(); },
+    app: () => {
+      let html = renderHeaderView() + renderNavTabs();
+      if(currentView === 'dashboard') html += renderDashboard();
+      if(currentView === 'properties') html += renderPropertiesView();
+      if(currentView === 'overview') html += renderOverview();
+      html += renderMobileNav();
+      appElement.innerHTML = html;
+      bindDashboard();
+      if(currentView === 'overview') setTimeout(updateCharts, 60);
+    }
+  };
+
+  // Replace default render block with dynamic modular engine strategy
+  function render() {
+    if(!state.started) return APP_VIEWS.setup();
+    if(!localPlayerId) return APP_VIEWS.gate();
+    return APP_VIEWS.app();
   }
 </script>
 </body>
