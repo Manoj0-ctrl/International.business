@@ -37,6 +37,22 @@
   }
   #app{max-width:520px;margin:0 auto;padding:18px 14px 60px;}
 
+  /* TOAST NOTIFICATION STYLES */
+  #toast-container {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px; pointer-events: none; width: 92%; max-width: 450px;
+  }
+  .toast {
+    background: var(--ink-2); color: var(--paper); padding: 14px 18px; border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-size: 13px; font-family: 'Inter', sans-serif; line-height: 1.5;
+    border-left: 4px solid var(--brass); opacity: 0; 
+    animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, fadeOut 0.4s ease forwards 5.5s;
+  }
+  .toast b { color: var(--brass-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+  
+  @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
   .masthead{
     text-align:center;
     padding:22px 10px 18px;
@@ -291,6 +307,7 @@
 </style>
 </head>
 <body>
+<div id="toast-container"></div>
 <div id="app"></div>
 
 <script type="module">
@@ -319,9 +336,11 @@
   let state = null;
   let lobbyState = null;
   
-  // Local Session Management
+  // Local Session Management (Fixed strict checking)
   const identityKey = 'ledger_identity_' + getRoomId();
   let localPlayerId = getRoomId() ? localStorage.getItem(identityKey) : null;
+  if(localPlayerId === 'null') localPlayerId = null; // Clean ghost sessions
+  
   let currentView = 'dashboard'; 
   
   // Chart Instances
@@ -332,6 +351,39 @@
   function escapeAttr(s){ return escapeHtml(s); }
   function uid(){ return Math.random().toString(36).slice(2,9); }
   function fmt(n){ const neg = n < 0; const v = Math.abs(Math.round(n)); return (neg?'-':'') + '$' + v.toLocaleString('en-US'); }
+
+  // -------------------------------------------------------------
+  // TOAST NOTIFICATIONS (RULES SYSTEM)
+  // -------------------------------------------------------------
+  function showToast(title, message) {
+    const container = document.getElementById('toast-container');
+    if(!container) return;
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<b>${title}</b>${message}`;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 6000);
+  }
+
+  function triggerRuleReminder(txType) {
+    const rules = {
+      'buyProperty': { t: 'Rule: Buying Property', m: 'Unowned properties you land on can be bought. If you decline, the Bank auctions it to the highest bidder.' },
+      'mortgage': { t: 'Rule: Mortgages', m: 'Mortgaged properties collect NO rent. To unmortgage, you pay the Bank the exact mortgage value (no interest).' },
+      'duty': { t: 'Rule: Duty / Taxes', m: 'Custom Duty = $100 per unmortgaged property (Max $1000). Travelling Duty = $50 per property (Max $500).' },
+      'creditCardUse': { t: 'Rule: Credit Card', m: 'The limit is $10,000. It MUST be repaid in exactly 6 installments of $2,000 each ($12,000 total).' },
+      'passStart': { t: 'Rule: Start Space', m: 'You collect $1,500 from the Bank every time you pass or land on the Start space.' },
+      'jailEnter': { t: 'Rule: Jail Penalty', m: 'In Jail, you lose your turn and CANNOT collect rent. Pay $500 or roll a 12 to get out.' },
+      'passportRegain': { t: 'Rule: Passport', m: 'Without a passport, you CANNOT collect rent. Regain it by paying $5,000 or waiting 6 rounds.' },
+      'partyHouse': { t: 'Rule: Party House', m: 'Collect $200 from EVERY other active player on the board.' },
+      'resort': { t: 'Rule: Resort', m: 'Pay $200 to EVERY other active player on the board.' }
+    };
+    
+    if(rules[txType]) {
+      // Clear existing toasts so they don't stack infinitely
+      document.getElementById('toast-container').innerHTML = '';
+      showToast(rules[txType].t, rules[txType].m);
+    }
+  }
 
   // -------------------------------------------------------------
   // LOBBY vs ROOM ROUTING
@@ -442,11 +494,6 @@
     }
   }
 
-  function addLog(text){
-    if(!state.log) state.log = [];
-    state.log.unshift({ id: uid(), round: state.round, text });
-  }
-
   function activePlayers(){ return (state.players || []).filter(p=>!p.bankrupt); }
   function playerById(id){ return (state.players || []).find(p=>p.id===id); }
   function ownedBy(playerId){ return (state.board || []).filter(pr=>pr.ownerId===playerId); }
@@ -514,7 +561,7 @@
       return;
     }
     
-    // Phase 2: Identity Gate
+    // Phase 2: Identity Gate (Strict Check)
     if(!localPlayerId){
       app.innerHTML = renderIdentityGate();
       bindIdentityGate();
@@ -534,7 +581,6 @@
     bindDashboard();
     
     if(currentView === 'overview') {
-      // Small timeout ensures the DOM has fully painted the Canvas elements
       setTimeout(updateCharts, 50);
     }
   }
@@ -572,6 +618,7 @@
       btn.addEventListener('click', (e) => {
         localPlayerId = e.target.dataset.identity;
         localStorage.setItem(identityKey, localPlayerId);
+        showToast("Identity Verified", "You are now connected to the live session.");
         render();
       });
     });
@@ -587,8 +634,8 @@
         <div class="sub">a live account of fortunes won & lost</div>
         <div class="round-strip">
           <span class="round-pill">ROUND ${state.round}</span>
+          <button class="btn-ghost" data-action="switch-user">switch player</button>
           <button class="btn-ghost" data-action="leave-room">&larr; lobby</button>
-          <button class="btn-ghost" data-action="next-round">+ next round</button>
           <button class="btn-ghost" data-action="reset-game">reset</button>
         </div>
       </div>
@@ -628,7 +675,6 @@
     const p = playerById(localPlayerId);
     
     if (p) {
-      // Re-ordered display: Liquid Cash is huge, Net Worth is small
       const owned = ownedBy(p.id);
       const nw = netWorth(p);
       html += `
@@ -684,7 +730,6 @@
     return html;
   }
 
-  // Generate Leaderboard emphasizing Liquid Cash hierarchy
   function renderLeaderboard(){
     const sorted = [...(state.players || [])].sort((a,b)=>a.cash - b.cash).reverse();
     const cards = sorted.map((p,i)=>{
@@ -725,7 +770,6 @@
   function updateCharts() {
     const players = activePlayers();
     
-    // --- 1. NET WORTH / CASH BAR CHART ---
     const ctxNW = document.getElementById('netWorthChart');
     if(ctxNW) {
       if(barChart) barChart.destroy();
@@ -754,7 +798,6 @@
       });
     }
 
-    // --- 2. ASSET DISTRIBUTION PIE CHART ---
     const ctxAsset = document.getElementById('assetChart');
     if(ctxAsset) {
       if(pieChart) pieChart.destroy();
@@ -776,15 +819,6 @@
         }
       });
     }
-  }
-
-  function stampRow(p){
-    let stamps = '';
-    if(p.bankrupt) stamps += `<span class="stamp">Bankrupt</span>`;
-    if(p.jailed) stamps += `<span class="stamp">Jailed</span>`;
-    if(!p.passport) stamps += `<span class="stamp">No Passport</span>`;
-    if(p.creditCard && p.creditCard.used) stamps += `<span class="stamp blue">Owes ${fmt(p.creditCard.remainingInstallments*2000)}</span>`;
-    return stamps ? `<div class="stamps">${stamps}</div>` : '';
   }
 
   function playerOptions(filterFn){
@@ -1010,7 +1044,7 @@
 
   function renderLog(){
     if(!state.log || state.log.length===0){
-      return `<div class="section-label">Ledger</div><div class="empty-log">No transactions recorded yet — the bank awaits its first customer.</div>`;
+      return `<div class="section-label">Ledger</div><div class="empty-log">No transactions recorded yet.</div>`;
     }
     const rows = state.log.slice(0,60).map(l=>`
       <div class="log-entry">
@@ -1040,8 +1074,12 @@
     if(addBtn) addBtn.addEventListener('click', ()=>{
       if(state._draftPlayers.length<6){ state._draftPlayers.push(''); render(); }
     });
+    
     const leaveBtn = document.querySelector('[data-action="leave-room"]');
-    if(leaveBtn) leaveBtn.addEventListener('click', () => window.location.hash = '');
+    if(leaveBtn) leaveBtn.addEventListener('click', () => {
+      localStorage.removeItem(identityKey);
+      window.location.hash = '';
+    });
 
     const startBtn = document.querySelector('[data-action="start-game"]');
     if(startBtn) startBtn.addEventListener('click', ()=>{
@@ -1077,17 +1115,27 @@
     if(nextBtn) nextBtn.addEventListener('click', ()=>{
       state.round += 1;
       saveState();
+      showToast("Next Round", `It is now Round ${state.round}!`);
     });
     
     const leaveBtn = document.querySelector('[data-action="leave-room"]');
     if(leaveBtn) leaveBtn.addEventListener('click', ()=>{
+      localStorage.removeItem(identityKey);
       window.location.hash = '';
     });
     
+    const switchUserBtn = document.querySelector('[data-action="switch-user"]');
+    if(switchUserBtn) switchUserBtn.addEventListener('click', ()=>{
+      localPlayerId = null;
+      localStorage.removeItem(identityKey);
+      render();
+    });
+
     const resetBtn = document.querySelector('[data-action="reset-game"]');
     if(resetBtn) resetBtn.addEventListener('click', ()=>{
       if(confirm('Reset the whole game? This clears all players and history.')){
         state = defaultState();
+        localStorage.removeItem(identityKey);
         saveState();
       }
     });
@@ -1103,6 +1151,7 @@
     const txSelect = document.getElementById('txType');
     if(txSelect) txSelect.addEventListener('change', e=>{
       state._txType = e.target.value;
+      triggerRuleReminder(e.target.value);
       render();
     });
 
@@ -1115,8 +1164,7 @@
   function wireDynamicFields(){
     const playerSel = document.getElementById('f_player');
     if(playerSel){
-      // Pre-select the logged-in player automatically
-      if (localPlayerId !== 'banker' && !playerSel.dataset.only) {
+      if (localPlayerId !== 'banker' && !playerSel.dataset.only && playerById(localPlayerId)) {
         playerSel.value = localPlayerId;
       }
       
@@ -1271,13 +1319,11 @@
 
   function handleSubmit(){
     const btn = document.getElementById('btnSubmitTx');
-    // Debounce to prevent double-tapping
     btn.disabled = true;
     btn.innerText = "Processing...";
     
     setTimeout(() => {
-      btn.disabled = false;
-      btn.innerText = "Record it";
+      if(btn) { btn.disabled = false; btn.innerText = "Record it"; }
     }, 1500);
 
     const t = state._txType || document.getElementById('txType').value;
@@ -1294,6 +1340,7 @@
           prop.ownerId = p.id; prop.mortgaged = false;
           p.cash -= amt;
           addLog(`<b>${p.name}</b> bought <b>${escapeHtml(prop.name)}</b> from the Bank for ${fmt(amt)}.`);
+          showToast("Property Bought", `${p.name} added ${prop.name} to their portfolio.`);
           break;
         }
         case 'sellProperty': {
@@ -1342,6 +1389,7 @@
           const p = player();
           p.cash += PASS_START_BONUS;
           addLog(`<b>${p.name}</b> passed Start and collected ${fmt(PASS_START_BONUS)}.`);
+          showToast("Payday", `${p.name} collected their $1,500 bonus.`);
           break;
         }
         case 'bankPay': {
