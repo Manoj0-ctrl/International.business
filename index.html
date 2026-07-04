@@ -281,15 +281,12 @@
     databaseURL: "https://business-da37a-default-rtdb.firebaseio.com"
   };
 
-  // Initialize Firebase Connection Engine
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Dynamic Room Code Detection (Reads standard URL hash signatures, e.g., index.html#RoomAlpha)
   const getRoomId = () => window.location.hash.replace('#', '').trim() || 'Lobby';
   let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
 
-  // Listen for hash modifications mid-session to navigate across separate game sessions
   window.addEventListener('hashchange', () => {
     window.location.reload();
   });
@@ -299,33 +296,34 @@
   const DUTY_RATES = { custom:{rate:100,cap:1000,label:'Custom Duty'}, travel:{rate:50,cap:500,label:'Travelling Duty'} };
   const PASS_START_BONUS = 1500;
 
+  // Fully updated Property Cards Array + Colour Groups
   const MASTER_PROPERTIES = [
-    {name:'England', price:2500, category:'Country'},
-    {name:'Singapore', price:3000, category:'Country'},
-    {name:'Malaysia', price:1500, category:'Country'},
-    {name:'China', price:4500, category:'Country'},
-    {name:'Saudi Arabia', price:5500, category:'Country'},
-    {name:'India', price:4500, category:'Country'},
-    {name:'Australia', price:3300, category:'Country'},
-    {name:'Hongkong', price:2000, category:'Country'},
-    {name:'Mexico', price:4000, category:'Country'},
-    {name:'USA', price:8500, category:'Country'},
-    {name:'Japan', price:2500, category:'Country'},
-    {name:'Italy', price:3500, category:'Country'},
-    {name:'Brazil', price:2500, category:'Country'},
-    {name:'Switzerland', price:3500, category:'Country'},
-    {name:'Germany', price:3500, category:'Country'},
-    {name:'Canada', price:4000, category:'Country'},
-    {name:'Egypt', price:3200, category:'Country'},
-    {name:'Iran', price:2500, category:'Country'},
-    {name:'France', price:2500, category:'Country'},
-    {name:'Iraq', price:5000, category:'Country'},
-    {name:'Railways', price:9500, category:'Transport'},
-    {name:'Petroleum', price:5500, category:'Transport'},
-    {name:'Roadways', price:3500, category:'Transport'},
-    {name:'Airways', price:10500, category:'Transport'},
-    {name:'Waterways', price:9500, category:'Transport'},
-    {name:'Satellite', price:2000, category:'Transport'},
+    {name:'Italy', price:3500, rent:200, mortgage:1000, category:'Country', color:'Red'},
+    {name:'Germany', price:3500, rent:400, mortgage:1750, category:'Country', color:'Red'},
+    {name:'Canada', price:4000, rent:400, mortgage:2000, category:'Country', color:'Yellow'},
+    {name:'Mexico', price:4000, rent:900, mortgage:2000, category:'Country', color:'Yellow'},
+    {name:'England', price:2500, rent:700, mortgage:3500, category:'Country', color:'Red'},
+    {name:'Switzerland', price:3500, rent:700, mortgage:3300, category:'Country', color:'Red'},
+    {name:'Australia', price:3300, rent:400, mortgage:2000, category:'Country', color:'Yellow'},
+    {name:'USA', price:8500, rent:1000, mortgage:5000, category:'Country', color:'Yellow'},
+    {name:'France', price:2500, rent:300, mortgage:1250, category:'Country', color:'Red'},
+    {name:'Brazil', price:2500, rent:300, mortgage:1300, category:'Country', color:'Yellow'},
+    {name:'Iran', price:2500, rent:300, mortgage:1250, category:'Country', color:'Green'},
+    {name:'Saudi Arabia', price:5500, rent:600, mortgage:2800, category:'Country', color:'Green'},
+    {name:'Hongkong', price:2000, rent:200, mortgage:1000, category:'Country', color:'Blue'},
+    {name:'China', price:4500, rent:450, mortgage:2250, category:'Country', color:'Blue'},
+    {name:'Malaysia', price:1500, rent:200, mortgage:800, category:'Country', color:'Green'},
+    {name:'Egypt', price:3200, rent:300, mortgage:1500, category:'Country', color:'Green'},
+    {name:'India', price:4500, rent:550, mortgage:2750, category:'Country', color:'Blue'},
+    {name:'Japan', price:2500, rent:250, mortgage:1250, category:'Country', color:'Blue'},
+    {name:'Iraq', price:5000, rent:500, mortgage:2500, category:'Country', color:'Green'},
+    {name:'Singapore', price:3000, rent:300, mortgage:1500, category:'Country', color:'Blue'},
+    {name:'Satellite', price:2000, rent:500, mortgage:1250, category:'Transport', color:null},
+    {name:'Waterways', price:9500, rent:1400, mortgage:2000, category:'Transport', color:null},
+    {name:'Airways', price:10500, rent:1500, mortgage:5500, category:'Transport', color:null},
+    {name:'Roadways', price:3500, rent:800, mortgage:1800, category:'Transport', color:null},
+    {name:'Petroleum', price:5500, rent:500, mortgage:1300, category:'Transport', color:null},
+    {name:'Railways', price:9500, rent:1500, mortgage:5000, category:'Transport', color:null}
   ];
 
   const CARD_DECKS = {
@@ -367,11 +365,8 @@
     return { started:false, round:1, players:[], board:[], log:[] };
   }
 
-  // Firebase Realtime Listener handles state syncing automatically across instances
   onValue(gameRef, (snapshot) => {
     const data = snapshot.val();
-    
-    // Retain setup data variables to keep typing inputs from stuttering
     const draftBackup = state ? state._draftPlayers : null;
     const activeTxTypeBackup = state ? state._txType : null;
     const openPropsBackup = state ? state._openProps : null;
@@ -394,12 +389,7 @@
   }
 
   function uid(){ return Math.random().toString(36).slice(2,9); }
-
-  function fmt(n){
-    const neg = n < 0;
-    const v = Math.abs(Math.round(n));
-    return (neg?'-':'') + '$' + v.toLocaleString('en-US');
-  }
+  function fmt(n){ const neg = n < 0; const v = Math.abs(Math.round(n)); return (neg?'-':'') + '$' + v.toLocaleString('en-US'); }
 
   function addLog(text){
     if(!state.log) state.log = [];
@@ -415,8 +405,6 @@
     const ccDebt = p.creditCard.used ? p.creditCard.remainingInstallments*2000 : 0;
     return p.cash + propsVal - ccDebt;
   }
-
-  /* ---------------- RENDER ---------------- */
 
   function render(){
     const app = document.getElementById('app');
@@ -445,9 +433,7 @@
   }
 
   function renderSetup(){
-    if(!state._draftPlayers || state._draftPlayers.length===0){
-      state._draftPlayers = ['',''];
-    }
+    if(!state._draftPlayers || state._draftPlayers.length===0) state._draftPlayers = ['',''];
     const rows = state._draftPlayers.map((name,i)=>`
       <div class="player-input-row">
         <input type="text" data-draft-idx="${i}" value="${escapeAttr(name)}" placeholder="Player ${i+1} name" maxlength="18">
@@ -528,7 +514,7 @@
     list.forEach(pr=>{ (groups[pr.category] = groups[pr.category]||[]).push(pr); });
     return Object.keys(groups).map(cat=>`
       <optgroup label="${cat}">
-        ${groups[cat].map(pr=>`<option value="${pr.id}">${escapeHtml(pr.name)} — ${fmt(pr.price)}</option>`).join('')}
+        ${groups[cat].map(pr=>`<option value="${pr.id}">${escapeHtml(pr.name)} — Buy: ${fmt(pr.price)} | Rent: ${fmt(pr.rent)} | Mort: ${fmt(pr.mortgage)}</option>`).join('')}
       </optgroup>
     `).join('');
   }
@@ -585,7 +571,7 @@
         <div class="field-label">Player</div>
         <select class="action-select" id="f_player">${playerOptions(active)}</select>
         <div class="field-label">Property</div>
-        <select class="action-select" id="f_property" data-price-source="1">${propertyOptions(available)}</select>
+        <select class="action-select" id="f_property" data-autofill="price">${propertyOptions(available)}</select>
         <div class="field-label">Amount paid (edit for auctions/deals)</div>
         <input class="action-select" id="f_amount" type="number" placeholder="0">
       `; }
@@ -593,7 +579,7 @@
         <div class="field-label">Player</div>
         <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
         <div class="field-label">Property</div>
-        <select class="action-select" id="f_property"></select>
+        <select class="action-select" id="f_property" data-autofill="price"></select>
         <div class="field-label">Sale value received</div>
         <input class="action-select" id="f_amount" type="number" placeholder="0">
       `;
@@ -601,7 +587,7 @@
         <div class="field-label">Player</div>
         <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
         <div class="field-label">Property to mortgage</div>
-        <select class="action-select" id="f_property"></select>
+        <select class="action-select" id="f_property" data-autofill="mortgage"></select>
         <div class="field-label">Mortgage value received from Bank</div>
         <input class="action-select" id="f_amount" type="number" placeholder="0">
       `;
@@ -609,7 +595,7 @@
         <div class="field-label">Player</div>
         <select class="action-select" id="f_player" data-props-source="1" data-only="mortgaged">${playerOptions(active)}</select>
         <div class="field-label">Mortgaged property</div>
-        <select class="action-select" id="f_property"></select>
+        <select class="action-select" id="f_property" data-autofill="mortgage"></select>
         <div class="field-label">Amount paid to Bank to lift mortgage</div>
         <input class="action-select" id="f_amount" type="number" placeholder="0">
       `;
@@ -617,11 +603,17 @@
         <div class="field-label">Paid by</div>
         <select class="action-select" id="f_player">${playerOptions(active)}</select>
         <div class="field-label">Paid to</div>
-        <select class="action-select" id="f_player2">${playerOptions(active)}</select>
+        <select class="action-select" id="f_player2" data-props-source="1" data-only="unmortgaged" data-target-prop="f_propName">${playerOptions(active)}</select>
         <div class="field-row">
-          <div><div class="field-label">Property (optional)</div><input class="action-select" id="f_propName" placeholder="e.g. Japan"></div>
+          <div>
+            <div class="field-label">Property</div>
+            <select class="action-select" id="f_propName" data-autofill="rent">
+              <option value="">— select property —</option>
+            </select>
+          </div>
           <div><div class="field-label">Rent amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
         </div>
+        <div id="rentMultiplierHint" style="font-size: 11px; margin-top: -5px; margin-bottom: 10px; color: var(--good); padding-left: 2px;"></div>
       `;
       case 'passStart': return `
         <div class="field-label">Player</div>
@@ -774,7 +766,10 @@
         creditCard: { used:false, remainingInstallments:0 },
         jailed:false, passport:true, bankrupt:false
       }));
-      state.board = MASTER_PROPERTIES.map(pr=>({ id: uid(), name: pr.name, price: pr.price, category: pr.category, ownerId: null, mortgaged:false }));
+      state.board = MASTER_PROPERTIES.map(pr=>({ 
+        id: uid(), name: pr.name, price: pr.price, rent: pr.rent, mortgage: pr.mortgage, 
+        category: pr.category, color: pr.color, ownerId: null, mortgaged:false 
+      }));
       state.started = true;
       state.round = 1;
       state.log = [];
@@ -816,46 +811,96 @@
 
   function wireDynamicFields(){
     const playerSel = document.getElementById('f_player');
-    if(!playerSel) return;
+    if(playerSel){
+      const only = playerSel.dataset.only;
+      if(only){
+        [...playerSel.options].forEach(opt=>{
+          const p = playerById(opt.value);
+          if(!p) return;
+          let hide = false;
+          if(only==='jailed') hide = !p.jailed;
+          if(only==='noPassport') hide = p.passport;
+          if(only==='hasCC') hide = !(p.creditCard && p.creditCard.used);
+          if(only==='noCC') hide = (p.creditCard && p.creditCard.used);
+          if(hide) opt.remove();
+        });
+      }
 
-    const only = playerSel.dataset.only;
-    if(only){
-      [...playerSel.options].forEach(opt=>{
-        const p = playerById(opt.value);
-        if(!p) return;
-        let hide = false;
-        if(only==='jailed') hide = !p.jailed;
-        if(only==='noPassport') hide = p.passport;
-        if(only==='hasCC') hide = !(p.creditCard && p.creditCard.used);
-        if(only==='noCC') hide = (p.creditCard && p.creditCard.used);
-        if(hide) opt.remove();
-      });
+      if(playerSel.dataset.propsSource){
+        const populateProps = () => {
+          const propSel = document.getElementById('f_property');
+          if(!propSel) return;
+          const filterMode = playerSel.dataset.only;
+          let props = ownedBy(playerSel.value);
+          if(filterMode==='unmortgaged') props = props.filter(pr=>!pr.mortgaged);
+          if(filterMode==='mortgaged') props = props.filter(pr=>pr.mortgaged);
+          propSel.innerHTML = propertyOptions(props);
+          propSel.dispatchEvent(new Event('change'));
+        };
+        playerSel.addEventListener('change', populateProps);
+        populateProps();
+      }
     }
 
-    if(playerSel.dataset.propsSource){
-      const populateProps = () => {
-        const propSel = document.getElementById('f_property');
+    const player2Sel = document.getElementById('f_player2');
+    if (player2Sel && player2Sel.dataset.propsSource) {
+      const populateProps2 = () => {
+        const targetId = player2Sel.dataset.targetProp;
+        const propSel = document.getElementById(targetId);
         if(!propSel) return;
-        const filterMode = playerSel.dataset.only;
-        let props = ownedBy(playerSel.value);
-        if(filterMode==='unmortgaged') props = props.filter(pr=>!pr.mortgaged);
-        if(filterMode==='mortgaged') props = props.filter(pr=>pr.mortgaged);
-        propSel.innerHTML = propertyOptions(props);
+        let props = ownedBy(player2Sel.value).filter(pr => !pr.mortgaged);
+        propSel.innerHTML = '<option value="">— select property —</option>' + propertyOptions(props);
+        propSel.dispatchEvent(new Event('change'));
       };
-      playerSel.addEventListener('change', populateProps);
-      populateProps();
+      player2Sel.addEventListener('change', populateProps2);
+      populateProps2();
     }
 
-    const propSelForPrice = document.getElementById('f_property');
-    if(propSelForPrice && propSelForPrice.dataset.priceSource){
+    // Advanced Autofill Logic incorporating Colour Groups
+    document.querySelectorAll('[data-autofill]').forEach(sel => {
       const amountField = document.getElementById('f_amount');
-      const updatePrice = ()=>{
-        const pr = state.board.find(x=>x.id===propSelForPrice.value);
-        if(pr && amountField) amountField.value = pr.price;
+      const hintField = document.getElementById('rentMultiplierHint');
+      const autofillMode = sel.dataset.autofill;
+      
+      const updateAmount = () => {
+        const pr = state.board.find(x => x.id === sel.value);
+        if (hintField) hintField.innerHTML = '';
+        
+        if (pr && amountField) {
+          if (autofillMode === 'price') amountField.value = pr.price;
+          if (autofillMode === 'mortgage') amountField.value = pr.mortgage;
+          if (autofillMode === 'rent') {
+            let rentAmt = pr.rent;
+            
+            // Safeguard lookup for properties deployed before this patch
+            const masterPr = MASTER_PROPERTIES.find(m => m.name === pr.name);
+            const prColor = masterPr ? masterPr.color : pr.color;
+            
+            if (pr.category === 'Country' && prColor && pr.ownerId) {
+               // Verify how many properties of this exact color the landlord holds
+               const ownedOfColor = state.board.filter(b => {
+                 if (b.ownerId !== pr.ownerId || b.mortgaged) return false;
+                 const m = MASTER_PROPERTIES.find(master => master.name === b.name);
+                 return (m ? m.color : b.color) === prColor;
+               });
+               
+               if (ownedOfColor.length >= 3) {
+                 rentAmt = rentAmt * 2;
+                 if (hintField) hintField.innerHTML = `↑ Rent doubled! (Owner has ${ownedOfColor.length} ${prColor} sites). <i>Adjust manually if houses are built.</i>`;
+               } else {
+                 if (hintField) hintField.innerHTML = `Base rent. <i>Adjust manually if houses are built.</i>`;
+                 if (hintField) hintField.style.color = 'rgba(29,43,53,0.55)'; // Dim standard text
+               }
+            }
+            amountField.value = rentAmt;
+          }
+        } else if (!pr && amountField) {
+          amountField.value = '';
+        }
       };
-      propSelForPrice.addEventListener('change', updatePrice);
-      updatePrice();
-    }
+      sel.addEventListener('change', updateAmount);
+      if (sel.value) updateAmount();
+    });
 
     if(document.getElementById('f_dutyType')){
       const dutySel = document.getElementById('f_dutyType');
@@ -966,13 +1011,16 @@
         case 'payRent': {
           const p = player(); const p2 = playerById(getVal('f_player2'));
           const amt = Number(getVal('f_amount'))||0;
-          const propName = getVal('f_propName');
+          const propId = getVal('f_propName');
+          const prop = state.board.find(pr=>pr.id===propId);
+          const propNameStr = prop ? prop.name : '';
+          
           if(!p2.passport){
             addLog(`<b>${p2.name}</b> has no Passport and cannot collect rent — payment blocked.`);
             break;
           }
           p.cash -= amt; p2.cash += amt;
-          addLog(`<b>${p.name}</b> paid <b>${p2.name}</b> ${fmt(amt)} rent${propName?` for ${escapeHtml(propName)}`:''}.`);
+          addLog(`<b>${p.name}</b> paid <b>${p2.name}</b> ${fmt(amt)} rent${propNameStr?` for ${escapeHtml(propNameStr)}`:''}.`);
           break;
         }
         case 'passStart': {
