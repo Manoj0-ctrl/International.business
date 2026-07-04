@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE LEDGER — International Business Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12271F;
+    --ink-2:#0C1D16;
+    --paper:#F4EFDD;
+    --paper-2:#EAE2C4;
+    --navy:#1D2B35;
+    --brass:#B08D3E;
+    --brass-light:#D8BB74;
+    --stamp-red:#9B3A34;
+    --stamp-blue:#2E4A6B;
+    --good:#3C6E47;
+    --line: rgba(29,43,53,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(216,187,116,0.06), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(216,187,116,0.05), transparent 45%);
+    color:var(--navy);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:520px;margin:0 auto;padding:18px 14px 60px;}
+
+  .masthead{
+    text-align:center;
+    padding:22px 10px 18px;
+    color:var(--paper);
+    border-bottom:1px solid rgba(216,187,116,0.25);
+    margin-bottom:18px;
+    position:relative;
+  }
+  .masthead .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:.28em;
+    font-size:10.5px;
+    color:var(--brass-light);
+    text-transform:uppercase;
+  }
+  .masthead h1{
+    font-family:'Playfair Display',serif;
+    font-weight:800;
+    font-size:34px;
+    margin:6px 0 4px;
+    letter-spacing:.01em;
+  }
+  .masthead .sub{
+    font-size:12px;
+    color:rgba(244,239,221,0.6);
+    font-style:italic;
+  }
+  .round-strip{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    margin-top:14px;flex-wrap:wrap;
+  }
+  .round-pill{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink);
+    background:var(--brass-light);
+    padding:5px 12px;
+    border-radius:2px;
+    letter-spacing:.06em;
+  }
+  .btn-ghost{
+    background:transparent;border:1px solid rgba(244,239,221,0.35);
+    color:rgba(244,239,221,0.85);
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+    padding:5px 10px;border-radius:2px;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--brass-light);color:var(--brass-light);}
+
+  .paper-card{
+    background:var(--paper);
+    border-radius:3px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    padding:20px;
+    position:relative;
+    background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, var(--line) 28px);
+  }
+  .paper-card::before{
+    content:'';
+    position:absolute; left:14px; top:0; bottom:0; width:1px;
+    background:rgba(155,58,52,0.18);
+  }
+  .card-title{
+    font-family:'Playfair Display',serif;
+    font-weight:700;
+    font-size:19px;
+    margin:0 0 4px 20px;
+    color:var(--ink);
+  }
+  .card-hint{
+    font-size:12px;color:rgba(29,43,53,0.55);margin:0 0 16px 20px;
+  }
+  .player-input-row{
+    display:flex;gap:8px;margin:0 0 10px 20px;
+  }
+  .player-input-row input{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    padding:9px 10px;
+    border:1px solid rgba(29,43,53,0.25);
+    border-radius:2px;
+    background:rgba(255,255,255,0.5);
+  }
+  .icon-btn{
+    width:36px;flex-shrink:0;
+    border:1px solid rgba(29,43,53,0.25);
+    background:rgba(255,255,255,0.4);
+    border-radius:2px;font-size:16px;cursor:pointer;color:var(--navy);
+  }
+  .btn-primary{
+    width:100%;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:.08em;
+    font-size:12.5px;
+    text-transform:uppercase;
+    padding:13px;
+    border:none;border-radius:2px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .btn-primary:hover{background:var(--ink-2);}
+  .btn-secondary{
+    width:100%;
+    background:transparent;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:.06em;
+    font-size:11.5px;
+    text-transform:uppercase;
+    padding:10px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+
+  .section-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--brass-light);
+    margin:24px 4px 10px;
+  }
+  .player-card{
+    background:var(--paper);
+    border-radius:3px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    position:relative;
+    overflow:hidden;
+  }
+  .player-card.bankrupt{opacity:0.55;}
+  .rank-row{display:flex;align-items:center;justify-content:space-between;}
+  .rank-name{display:flex;align-items:baseline;gap:8px;}
+  .rank-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;color:var(--brass);
+    font-weight:700;
+  }
+  .p-name{
+    font-family:'Playfair Display',serif;
+    font-weight:700;font-size:18px;color:var(--ink);
+  }
+  .net-worth{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:16.5px;color:var(--good);
+  }
+  .sub-figures{
+    display:flex;gap:14px;margin-top:6px;
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(29,43,53,0.65);
+  }
+  .stamps{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .stamp{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;letter-spacing:.08em;
+    border:1.5px dashed var(--stamp-red);
+    color:var(--stamp-red);
+    padding:2px 7px;border-radius:20px;
+    transform:rotate(-4deg);
+    display:inline-block;
+    text-transform:uppercase;
+  }
+  .stamp.blue{border-color:var(--stamp-blue);color:var(--stamp-blue);transform:rotate(3deg);}
+  .props-toggle{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--brass);
+    margin-top:10px;cursor:pointer;letter-spacing:.05em;
+    display:inline-block;
+  }
+  .props-list{margin-top:8px;border-top:1px dashed rgba(29,43,53,0.2);padding-top:8px;}
+  .prop-row{
+    display:flex;justify-content:space-between;
+    font-size:12.5px;padding:3px 0;color:var(--navy);
+  }
+  .prop-row .cat{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(29,43,53,0.45);margin-right:6px;text-transform:uppercase;}
+  .prop-row .mort{color:var(--stamp-red);font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:6px;}
+
+  .action-select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:10px;
+    border:1px solid rgba(29,43,53,0.25);
+    border-radius:2px;
+    background:rgba(255,255,255,0.6);
+    margin-bottom:10px;
+    color:var(--navy);
+  }
+  .field-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(29,43,53,0.55);
+    margin:8px 0 4px 2px;
+  }
+  .field-row{display:flex;gap:8px;}
+  .field-row > *{flex:1;}
+  .hint-box{
+    font-size:11.5px;color:rgba(29,43,53,0.6);
+    background:rgba(176,141,62,0.12);
+    border-left:2px solid var(--brass);
+    padding:7px 9px;margin:8px 0;border-radius:2px;
+  }
+  .card-preview{
+    font-size:12.5px;color:var(--navy);
+    background:rgba(255,255,255,0.5);
+    border:1px dashed rgba(29,43,53,0.25);
+    padding:9px 10px;margin:8px 0;border-radius:2px;
+    line-height:1.5;
+  }
+  .card-preview .cnum{
+    font-family:'JetBrains Mono',monospace;color:var(--stamp-red);font-weight:700;margin-right:4px;
+  }
+
+  .log-entry{
+    display:flex;gap:10px;
+    padding:9px 0;
+    border-bottom:1px dashed rgba(255,255,255,0.12);
+  }
+  .log-time{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,239,221,0.4);
+    white-space:nowrap;padding-top:2px;
+  }
+  .log-text{font-size:12.5px;color:rgba(244,239,221,0.85);line-height:1.45;}
+  .log-text b{color:var(--brass-light);}
+  .empty-log{color:rgba(244,239,221,0.4);font-size:12px;text-align:center;padding:20px 0;font-style:italic;}
+
+  select, input{outline:none;}
+  select:focus, input:focus{border-color:var(--brass);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAmmXAvo6-q1iz36LuvLl7W95f17Q0_pTY",
+    authDomain: "business-da37a.firebaseapp.com",
+    projectId: "business-da37a",
+    storageBucket: "business-da37a.firebasestorage.app",
+    messagingSenderId: "452662224355",
+    appId: "1:452662224355:web:ab9af70d8d8f3121002cd6",
+    databaseURL: "https://business-da37a-default-rtdb.firebaseio.com"
+  };
+
+  // Initialize Firebase Connection Engine
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Dynamic Room Code Detection (Reads standard URL hash signatures, e.g., index.html#RoomAlpha)
+  const getRoomId = () => window.location.hash.replace('#', '').trim() || 'Lobby';
+  let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
+
+  // Listen for hash modifications mid-session to navigate across separate game sessions
+  window.addEventListener('hashchange', () => {
+    window.location.reload();
+  });
+
+  let state = null;
+
+  const DUTY_RATES = { custom:{rate:100,cap:1000,label:'Custom Duty'}, travel:{rate:50,cap:500,label:'Travelling Duty'} };
+  const PASS_START_BONUS = 1500;
+
+  const MASTER_PROPERTIES = [
+    {name:'England', price:2500, category:'Country'},
+    {name:'Singapore', price:3000, category:'Country'},
+    {name:'Malaysia', price:1500, category:'Country'},
+    {name:'China', price:4500, category:'Country'},
+    {name:'Saudi Arabia', price:5500, category:'Country'},
+    {name:'India', price:4500, category:'Country'},
+    {name:'Australia', price:3300, category:'Country'},
+    {name:'Hongkong', price:2000, category:'Country'},
+    {name:'Mexico', price:4000, category:'Country'},
+    {name:'USA', price:8500, category:'Country'},
+    {name:'Japan', price:2500, category:'Country'},
+    {name:'Italy', price:3500, category:'Country'},
+    {name:'Brazil', price:2500, category:'Country'},
+    {name:'Switzerland', price:3500, category:'Country'},
+    {name:'Germany', price:3500, category:'Country'},
+    {name:'Canada', price:4000, category:'Country'},
+    {name:'Egypt', price:3200, category:'Country'},
+    {name:'Iran', price:2500, category:'Country'},
+    {name:'France', price:2500, category:'Country'},
+    {name:'Iraq', price:5000, category:'Country'},
+    {name:'Railways', price:9500, category:'Transport'},
+    {name:'Petroleum', price:5500, category:'Transport'},
+    {name:'Roadways', price:3500, category:'Transport'},
+    {name:'Airways', price:10500, category:'Transport'},
+    {name:'Waterways', price:9500, category:'Transport'},
+    {name:'Satellite', price:2000, category:'Transport'},
+  ];
+
+  const CARD_DECKS = {
+    chance_even: { label:'CHANCE — even roll (2,4,6) · pay the Bank', cards:[
+      {num:2,  text:'Loss in Share market', amount:2000, type:'pay'},
+      {num:4,  text:'Fine for Accident due to Wrong Driving', amount:1000, type:'pay'},
+      {num:6,  text:'House repair', amount:1500, type:'pay'},
+      {num:8,  text:'Loss due to fire in godown', amount:3000, type:'pay'},
+      {num:10, text:'Go to Jail', amount:0, type:'jail'},
+      {num:12, text:'Repair of your Car', amount:200, type:'pay'},
+    ]},
+    chance_odd: { label:'CHANCE — odd roll (1,3,5,7,9,11) · receive from Bank', cards:[
+      {num:1,  text:'Lottery prize', amount:2500, type:'receive'},
+      {num:3,  text:'You have won cross word prize', amount:1000, type:'receive'},
+      {num:5,  text:'You have won Jackpot', amount:2000, type:'receive'},
+      {num:7,  text:'Collect rent from each player for all of your sites', amount:100, type:'collectEach'},
+      {num:9,  text:'Sale of stocks', amount:3000, type:'receive'},
+      {num:11, text:'Prize for best performance in Export', amount:1500, type:'receive'},
+    ]},
+    uno_even: { label:'UNO — even roll (2,4,6,8,10,12) · receive from Bank', cards:[
+      {num:2,  text:"It's your Anniversary — collect from each player", amount:500, type:'collectEach'},
+      {num:4,  text:'1st prize in Beauty contest', amount:2500, type:'receive'},
+      {num:6,  text:'Income tax refund', amount:2000, type:'receive'},
+      {num:8,  text:'Go to Party House & collect from each player', amount:200, type:'collectEach'},
+      {num:10, text:'Receive interest on shares', amount:1500, type:'receive'},
+      {num:12, text:'Sale of stocks', amount:3000, type:'receive'},
+    ]},
+    uno_odd: { label:'UNO — odd roll (1,3,5,7,9,11) · pay the Bank', cards:[
+      {num:1,  text:'Pay Insurance premium', amount:1500, type:'pay'},
+      {num:3,  text:'Go to Jail', amount:0, type:'jail'},
+      {num:5,  text:'School and Medical Fees', amount:2500, type:'pay'},
+      {num:7,  text:'Submit your Passport', amount:0, type:'passportLose'},
+      {num:9,  text:'Make General Repair on all your properties', amount:null, type:'repair', perHouse:50, perHotel:100},
+      {num:11, text:'Pay for each house / hotel you own', amount:null, type:'repair', perHouse:50, perHotel:100},
+    ]},
+  };
+
+  function defaultState(){
+    return { started:false, round:1, players:[], board:[], log:[] };
+  }
+
+  // Firebase Realtime Listener handles state syncing automatically across instances
+  onValue(gameRef, (snapshot) => {
+    const data = snapshot.val();
+    
+    // Retain setup data variables to keep typing inputs from stuttering
+    const draftBackup = state ? state._draftPlayers : null;
+    const activeTxTypeBackup = state ? state._txType : null;
+    const openPropsBackup = state ? state._openProps : null;
+
+    state = data ? data : defaultState();
+
+    if (!state.started && draftBackup) state._draftPlayers = draftBackup;
+    if (!state._txType && activeTxTypeBackup) state._txType = activeTxTypeBackup;
+    if (!state._openProps && openPropsBackup) state._openProps = openPropsBackup;
+
+    render();
+  });
+
+  async function saveState(){
+    try{ 
+      await set(gameRef, state); 
+    } catch(e){ 
+      console.error('Firebase state persistence push failed', e); 
+    }
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+
+  function fmt(n){
+    const neg = n < 0;
+    const v = Math.abs(Math.round(n));
+    return (neg?'-':'') + '$' + v.toLocaleString('en-US');
+  }
+
+  function addLog(text){
+    if(!state.log) state.log = [];
+    state.log.unshift({ id: uid(), round: state.round, text });
+  }
+
+  function activePlayers(){ return state.players.filter(p=>!p.bankrupt); }
+  function playerById(id){ return state.players.find(p=>p.id===id); }
+  function ownedBy(playerId){ return (state.board || []).filter(pr=>pr.ownerId===playerId); }
+
+  function netWorth(p){
+    const propsVal = ownedBy(p.id).reduce((s,pr)=>s+(pr.mortgaged?0:pr.price),0);
+    const ccDebt = p.creditCard.used ? p.creditCard.remainingInstallments*2000 : 0;
+    return p.cash + propsVal - ccDebt;
+  }
+
+  /* ---------------- RENDER ---------------- */
+
+  function render(){
+    const app = document.getElementById('app');
+    if(!state.started){
+      app.innerHTML = renderSetup();
+      bindSetup();
+      return;
+    }
+    app.innerHTML = renderHeader() + renderLeaderboard() + renderActionPanel() + renderLog();
+    bindDashboard();
+  }
+
+  function renderHeader(){
+    return `
+      <div class="masthead">
+        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
+        <h1>THE LEDGER</h1>
+        <div class="sub">a live account of fortunes won &amp; lost</div>
+        <div class="round-strip">
+          <span class="round-pill">ROUND ${state.round}</span>
+          <button class="btn-ghost" data-action="next-round">+ next round</button>
+          <button class="btn-ghost" data-action="reset-game">reset game</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSetup(){
+    if(!state._draftPlayers || state._draftPlayers.length===0){
+      state._draftPlayers = ['',''];
+    }
+    const rows = state._draftPlayers.map((name,i)=>`
+      <div class="player-input-row">
+        <input type="text" data-draft-idx="${i}" value="${escapeAttr(name)}" placeholder="Player ${i+1} name" maxlength="18">
+        ${state._draftPlayers.length>2?`<button class="icon-btn" data-remove-draft="${i}">&times;</button>`:''}
+      </div>
+    `).join('');
+    return `
+      <div class="masthead">
+        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
+        <h1>THE LEDGER</h1>
+        <div class="sub">a live account of fortunes won &amp; lost</div>
+      </div>
+      <div class="paper-card">
+        <div class="card-title">Open new accounts</div>
+        <div class="card-hint">Current Room code: <b>#${escapeHtml(getRoomId())}</b>. To start a separate session with friends, simply append a custom hash identifier to your URL line (e.g. <i>index.html#RoomXYZ</i>).</div>
+        ${rows}
+        <button class="btn-secondary" data-action="add-draft" style="margin-bottom:14px;">+ add player</button>
+        <button class="btn-primary" data-action="start-game">Start the game</button>
+      </div>
+    `;
+  }
+
+  function stampRow(p){
+    let stamps = '';
+    if(p.bankrupt) stamps += `<span class="stamp">Bankrupt</span>`;
+    if(p.jailed) stamps += `<span class="stamp">Jailed</span>`;
+    if(!p.passport) stamps += `<span class="stamp">No Passport</span>`;
+    if(p.creditCard && p.creditCard.used) stamps += `<span class="stamp blue">Owes ${fmt(p.creditCard.remainingInstallments*2000)}</span>`;
+    return stamps ? `<div class="stamps">${stamps}</div>` : '';
+  }
+
+  function renderLeaderboard(){
+    const sorted = [...state.players].sort((a,b)=>netWorth(b)-netWorth(a));
+    const cards = sorted.map((p,i)=>{
+      const propsOpen = state._openProps === p.id;
+      const owned = ownedBy(p.id);
+      const propsHtml = propsOpen ? `
+        <div class="props-list">
+          ${owned.length===0?'<div style="font-size:12px;color:rgba(29,43,53,0.5);">No properties owned yet.</div>':''}
+          ${owned.map(pr=>`
+            <div class="prop-row">
+              <span><span class="cat">${pr.category}</span>${escapeHtml(pr.name)}${pr.mortgaged?'<span class="mort">MORTGAGED</span>':''}</span>
+              <span>${fmt(pr.price)}</span>
+            </div>
+          `).join('')}
+        </div>` : '';
+      return `
+        <div class="player-card ${p.bankrupt?'bankrupt':''}">
+          <div class="rank-row">
+            <div class="rank-name">
+              <span class="rank-num">#${i+1}</span>
+              <span class="p-name">${escapeHtml(p.name)}</span>
+            </div>
+            <div class="net-worth">${fmt(netWorth(p))}</div>
+          </div>
+          <div class="sub-figures">
+            <span>cash ${fmt(p.cash)}</span>
+            <span>props ${owned.filter(pr=>!pr.mortgaged).length}</span>
+          </div>
+          ${stampRow(p)}
+          <div class="props-toggle" data-toggle-props="${p.id}">${propsOpen?'hide portfolio ▲':'view portfolio ▾'}</div>
+          ${propsHtml}
+        </div>
+      `;
+    }).join('');
+    return `<div class="section-label">Standings</div>${cards}`;
+  }
+
+  function playerOptions(filterFn){
+    let list = state.players || [];
+    if(filterFn) list = list.filter(filterFn);
+    return list.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  }
+
+  function propertyOptions(list){
+    if(!list || list.length===0) return `<option value="">— none available —</option>`;
+    const groups = {};
+    list.forEach(pr=>{ (groups[pr.category] = groups[pr.category]||[]).push(pr); });
+    return Object.keys(groups).map(cat=>`
+      <optgroup label="${cat}">
+        ${groups[cat].map(pr=>`<option value="${pr.id}">${escapeHtml(pr.name)} — ${fmt(pr.price)}</option>`).join('')}
+      </optgroup>
+    `).join('');
+  }
+
+  function renderActionPanel(){
+    const t = state._txType || 'buyProperty';
+    return `
+      <div class="section-label">Record a transaction</div>
+      <div class="paper-card">
+        <select class="action-select" id="txType">
+          <optgroup label="Property">
+            <option value="buyProperty" ${t==='buyProperty'?'selected':''}>Buy property from Bank</option>
+            <option value="sellProperty" ${t==='sellProperty'?'selected':''}>Sell property to Bank</option>
+            <option value="mortgage" ${t==='mortgage'?'selected':''}>Mortgage property</option>
+            <option value="unmortgage" ${t==='unmortgage'?'selected':''}>Lift mortgage</option>
+            <option value="payRent" ${t==='payRent'?'selected':''}>Pay rent to another player</option>
+          </optgroup>
+          <optgroup label="Bank">
+            <option value="passStart" ${t==='passStart'?'selected':''}>Pass / land on Start (collect $1,500)</option>
+            <option value="bankPay" ${t==='bankPay'?'selected':''}>Pay the Bank (other)</option>
+            <option value="bankReceive" ${t==='bankReceive'?'selected':''}>Receive from Bank (other)</option>
+            <option value="duty" ${t==='duty'?'selected':''}>Custom / Travelling duty</option>
+          </optgroup>
+          <optgroup label="Credit Card">
+            <option value="creditCardUse" ${t==='creditCardUse'?'selected':''}>Use credit card</option>
+            <option value="creditCardInstallment" ${t==='creditCardInstallment'?'selected':''}>Pay credit card installment</option>
+          </optgroup>
+          <optgroup label="Chance & UNO">
+            <option value="cardDraw" ${t==='cardDraw'?'selected':''}>Draw a Chance / UNO card</option>
+          </optgroup>
+          <optgroup label="Board Events">
+            <option value="partyHouse" ${t==='partyHouse'?'selected':''}>Party House (collect from all)</option>
+            <option value="resort" ${t==='resort'?'selected':''}>Resort (pay to all)</option>
+          </optgroup>
+          <optgroup label="Status">
+            <option value="jailEnter" ${t==='jailEnter'?'selected':''}>Go to Jail</option>
+            <option value="jailExit" ${t==='jailExit'?'selected':''}>Get out of Jail</option>
+            <option value="passportRegain" ${t==='passportRegain'?'selected':''}>Regain passport</option>
+            <option value="bankrupt" ${t==='bankrupt'?'selected':''}>Declare bankruptcy</option>
+          </optgroup>
+        </select>
+        ${renderFieldsFor(t)}
+        <button class="btn-primary" data-action="submit-tx">Record it</button>
+      </div>
+    `;
+  }
+
+  function renderFieldsFor(t){
+    const active = (p)=>!p.bankrupt;
+    switch(t){
+      case 'buyProperty': {
+        const available = state.board.filter(pr=>pr.ownerId===null);
+        return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-label">Property</div>
+        <select class="action-select" id="f_property" data-price-source="1">${propertyOptions(available)}</select>
+        <div class="field-label">Amount paid (edit for auctions/deals)</div>
+        <input class="action-select" id="f_amount" type="number" placeholder="0">
+      `; }
+      case 'sellProperty': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
+        <div class="field-label">Property</div>
+        <select class="action-select" id="f_property"></select>
+        <div class="field-label">Sale value received</div>
+        <input class="action-select" id="f_amount" type="number" placeholder="0">
+      `;
+      case 'mortgage': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-props-source="1" data-only="unmortgaged">${playerOptions(active)}</select>
+        <div class="field-label">Property to mortgage</div>
+        <select class="action-select" id="f_property"></select>
+        <div class="field-label">Mortgage value received from Bank</div>
+        <input class="action-select" id="f_amount" type="number" placeholder="0">
+      `;
+      case 'unmortgage': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-props-source="1" data-only="mortgaged">${playerOptions(active)}</select>
+        <div class="field-label">Mortgaged property</div>
+        <select class="action-select" id="f_property"></select>
+        <div class="field-label">Amount paid to Bank to lift mortgage</div>
+        <input class="action-select" id="f_amount" type="number" placeholder="0">
+      `;
+      case 'payRent': return `
+        <div class="field-label">Paid by</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-label">Paid to</div>
+        <select class="action-select" id="f_player2">${playerOptions(active)}</select>
+        <div class="field-row">
+          <div><div class="field-label">Property (optional)</div><input class="action-select" id="f_propName" placeholder="e.g. Japan"></div>
+          <div><div class="field-label">Rent amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
+        </div>
+      `;
+      case 'passStart': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="hint-box">Collects ${fmt(PASS_START_BONUS)} from the Bank for passing or landing on Start.</div>
+      `;
+      case 'bankPay': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-row">
+          <div><div class="field-label">Reason</div><input class="action-select" id="f_reason" placeholder="e.g. Jail fine"></div>
+          <div><div class="field-label">Amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
+        </div>
+      `;
+      case 'bankReceive': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-row">
+          <div><div class="field-label">Reason</div><input class="action-select" id="f_reason" placeholder="e.g. refund"></div>
+          <div><div class="field-label">Amount</div><input class="action-select" id="f_amount" type="number" placeholder="0"></div>
+        </div>
+      `;
+      case 'duty': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-label">Duty type</div>
+        <select class="action-select" id="f_dutyType">
+          <option value="custom">Custom Duty — $100 / property (max $1,000)</option>
+          <option value="travel">Travelling Duty — $50 / property (max $500)</option>
+        </select>
+        <div class="hint-box" id="dutyHint">Select a player to see the calculated amount.</div>
+      `;
+      case 'creditCardUse': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-only="noCC">${playerOptions(active)}</select>
+        <div class="field-row">
+          <div><div class="field-label">Used for</div><input class="action-select" id="f_reason" placeholder="e.g. buy property"></div>
+          <div><div class="field-label">Amount (max $10,000)</div><input class="action-select" id="f_amount" type="number" placeholder="0" max="10000"></div>
+        </div>
+        <div class="hint-box">Repaid as $2,000 &times; 6 installments = $12,000 total.</div>
+      `;
+      case 'creditCardInstallment': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-only="hasCC">${playerOptions(active)}</select>
+        <div class="hint-box" id="ccHint">Pays $2,000 toward outstanding credit card balance.</div>
+      `;
+      case 'cardDraw': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-label">Which deck &amp; roll</div>
+        <select class="action-select" id="f_deck">
+          <option value="chance_even">${CARD_DECKS.chance_even.label}</option>
+          <option value="chance_odd">${CARD_DECKS.chance_odd.label}</option>
+          <option value="uno_even">${CARD_DECKS.uno_even.label}</option>
+          <option value="uno_odd">${CARD_DECKS.uno_odd.label}</option>
+        </select>
+        <div class="field-label">Card drawn</div>
+        <select class="action-select" id="f_card"></select>
+        <div class="card-preview" id="cardPreview"></div>
+        <div id="repairFields"></div>
+      `;
+      case 'partyHouse': return `
+        <div class="field-label">Player who landed on Party House</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="hint-box">Collects $200 from every other active player.</div>
+      `;
+      case 'resort': return `
+        <div class="field-label">Player who landed on Resort</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="hint-box">Pays $200 to every other active player.</div>
+      `;
+      case 'jailEnter': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="field-label">Reason</div>
+        <select class="action-select" id="f_reason">
+          <option value="Landed on Jail">Landed on Jail directly</option>
+          <option value="Sent by Chance/UNO">Sent by Chance / UNO</option>
+          <option value="Missed $2,000 credit card payment">Missed $2,000 credit card payment</option>
+        </select>
+      `;
+      case 'jailExit': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-only="jailed">${playerOptions(active)}</select>
+        <div class="field-label">Method</div>
+        <select class="action-select" id="f_method">
+          <option value="pay500">Pay Bank $500</option>
+          <option value="roll12">Rolled a 12 (free, throws dice 3x)</option>
+          <option value="pay3000cc">Pay $3,000 via Credit Card</option>
+        </select>
+      `;
+      case 'passportRegain': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player" data-only="noPassport">${playerOptions(active)}</select>
+        <div class="field-label">Method</div>
+        <select class="action-select" id="f_method">
+          <option value="pay5000">Pay Bank $5,000</option>
+          <option value="rounds">Completed 6 rounds (free)</option>
+        </select>
+      `;
+      case 'bankrupt': return `
+        <div class="field-label">Player</div>
+        <select class="action-select" id="f_player">${playerOptions(active)}</select>
+        <div class="hint-box">All remaining properties return to the Bank. Player is removed from standings.</div>
+      `;
+      default: return '';
+    }
+  }
+
+  function renderLog(){
+    if(!state.log || state.log.length===0){
+      return `<div class="section-label">Ledger</div><div class="empty-log">No transactions recorded yet — the bank awaits its first customer.</div>`;
+    }
+    const rows = state.log.slice(0,60).map(l=>`
+      <div class="log-entry">
+        <div class="log-time">R${l.round}</div>
+        <div class="log-text">${l.text}</div>
+      </div>
+    `).join('');
+    return `<div class="section-label">Ledger</div>${rows}`;
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  /* ---------------- BIND EVENTS ---------------- */
+
+  function bindSetup(){
+    document.querySelectorAll('[data-draft-idx]').forEach(inp=>{
+      inp.addEventListener('input', e=>{
+        state._draftPlayers[parseInt(e.target.dataset.draftIdx)] = e.target.value;
+      });
+    });
+    document.querySelectorAll('[data-remove-draft]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        state._draftPlayers.splice(parseInt(e.target.dataset.removeDraft),1);
+        render();
+      });
+    });
+    const addBtn = document.querySelector('[data-action="add-draft"]');
+    if(addBtn) addBtn.addEventListener('click', ()=>{
+      if(state._draftPlayers.length<6){ state._draftPlayers.push(''); render(); }
+    });
+    const startBtn = document.querySelector('[data-action="start-game"]');
+    if(startBtn) startBtn.addEventListener('click', ()=>{
+      const names = state._draftPlayers.map(n=>n.trim()).filter(Boolean);
+      if(names.length<2){ alert('Add at least two players.'); return; }
+      state.players = names.map(name=>({
+        id: uid(), name, cash: 25000,
+        creditCard: { used:false, remainingInstallments:0 },
+        jailed:false, passport:true, bankrupt:false
+      }));
+      state.board = MASTER_PROPERTIES.map(pr=>({ id: uid(), name: pr.name, price: pr.price, category: pr.category, ownerId: null, mortgaged:false }));
+      state.started = true;
+      state.round = 1;
+      state.log = [];
+      addLog(`<b>Game started.</b> ${names.length} accounts opened, each with $25,000 cash and a $10,000 credit line. Board loaded with 26 properties.`);
+      delete state._draftPlayers;
+      saveState();
+    });
+  }
+
+  function bindDashboard(){
+    document.querySelector('[data-action="next-round"]').addEventListener('click', ()=>{
+      state.round += 1;
+      saveState();
+    });
+    document.querySelector('[data-action="reset-game"]').addEventListener('click', ()=>{
+      if(confirm('Reset the whole game? This clears all players and history.')){
+        state = defaultState();
+        saveState();
+      }
+    });
+    document.querySelectorAll('[data-toggle-props]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.dataset.toggleProps;
+        state._openProps = state._openProps===id ? null : id;
+        render();
+      });
+    });
+
+    const txSelect = document.getElementById('txType');
+    txSelect.addEventListener('change', e=>{
+      state._txType = e.target.value;
+      render();
+    });
+
+    wireDynamicFields();
+
+    document.querySelector('[data-action="submit-tx"]').addEventListener('click', handleSubmit);
+  }
+
+  function wireDynamicFields(){
+    const playerSel = document.getElementById('f_player');
+    if(!playerSel) return;
+
+    const only = playerSel.dataset.only;
+    if(only){
+      [...playerSel.options].forEach(opt=>{
+        const p = playerById(opt.value);
+        if(!p) return;
+        let hide = false;
+        if(only==='jailed') hide = !p.jailed;
+        if(only==='noPassport') hide = p.passport;
+        if(only==='hasCC') hide = !(p.creditCard && p.creditCard.used);
+        if(only==='noCC') hide = (p.creditCard && p.creditCard.used);
+        if(hide) opt.remove();
+      });
+    }
+
+    if(playerSel.dataset.propsSource){
+      const populateProps = () => {
+        const propSel = document.getElementById('f_property');
+        if(!propSel) return;
+        const filterMode = playerSel.dataset.only;
+        let props = ownedBy(playerSel.value);
+        if(filterMode==='unmortgaged') props = props.filter(pr=>!pr.mortgaged);
+        if(filterMode==='mortgaged') props = props.filter(pr=>pr.mortgaged);
+        propSel.innerHTML = propertyOptions(props);
+      };
+      playerSel.addEventListener('change', populateProps);
+      populateProps();
+    }
+
+    const propSelForPrice = document.getElementById('f_property');
+    if(propSelForPrice && propSelForPrice.dataset.priceSource){
+      const amountField = document.getElementById('f_amount');
+      const updatePrice = ()=>{
+        const pr = state.board.find(x=>x.id===propSelForPrice.value);
+        if(pr && amountField) amountField.value = pr.price;
+      };
+      propSelForPrice.addEventListener('change', updatePrice);
+      updatePrice();
+    }
+
+    if(document.getElementById('f_dutyType')){
+      const dutySel = document.getElementById('f_dutyType');
+      const updateHint = ()=>{
+        const p = playerById(playerSel.value);
+        if(!p) return;
+        const conf = DUTY_RATES[dutySel.value];
+        const owned = ownedBy(p.id).filter(pr=>!pr.mortgaged).length;
+        const amt = Math.min(owned*conf.rate, conf.cap);
+        document.getElementById('dutyHint').textContent =
+          `${p.name} owns ${owned} propert${owned===1?'y':'ies'} → owes ${fmt(amt)} (capped at ${fmt(conf.cap)}).`;
+      };
+      playerSel.addEventListener('change', updateHint);
+      dutySel.addEventListener('change', updateHint);
+      updateHint();
+    }
+
+    if(document.getElementById('ccHint')){
+      const updateCC = ()=>{
+        const p = playerById(playerSel.value);
+        if(p && p.creditCard && p.creditCard.used) {
+          document.getElementById('ccHint').textContent =
+            `Pays $2,000 toward ${p.name}'s outstanding balance (${p.creditCard.remainingInstallments} of 6 installments remain).`;
+        }
+      };
+      playerSel.addEventListener('change', updateCC);
+      updateCC();
+    }
+
+    if(document.getElementById('f_deck')){
+      const deckSel = document.getElementById('f_deck');
+      const cardSel = document.getElementById('f_card');
+      const preview = document.getElementById('cardPreview');
+      const repairBox = document.getElementById('repairFields');
+      const populateCards = ()=>{
+        const deck = CARD_DECKS[deckSel.value];
+        cardSel.innerHTML = deck.cards.map((c,i)=>`<option value="${i}">#${c.num} — ${escapeHtml(c.text)}</option>`).join('');
+        updatePreview();
+      };
+      const updatePreview = ()=>{
+        const deck = CARD_DECKS[deckSel.value];
+        const card = deck.cards[cardSel.value];
+        let amtText = '';
+        if(card.type==='pay') amtText = `Pay ${fmt(card.amount)} to the Bank.`;
+        if(card.type==='receive') amtText = `Receive ${fmt(card.amount)} from the Bank.`;
+        if(card.type==='collectEach') amtText = `Collect ${fmt(card.amount)} from each other active player.`;
+        if(card.type==='jail') amtText = `Go directly to Jail.`;
+        if(card.type==='passportLose') amtText = `Passport is confiscated — no rent collection until regained.`;
+        if(card.type==='repair') amtText = `Pay $${card.perHouse} per house and $${card.perHotel} per hotel you own.`;
+        preview.innerHTML = `<span class="cnum">#${card.num}</span>${escapeHtml(card.text)}<br>${amtText}`;
+        repairBox.innerHTML = card.type==='repair' ? `
+          <div class="field-row">
+            <div><div class="field-label">Houses owned</div><input class="action-select" id="f_houses" type="number" value="0" min="0"></div>
+            <div><div class="field-label">Hotels owned</div><input class="action-select" id="f_hotels" type="number" value="0" min="0"></div>
+          </div>
+        ` : '';
+      };
+      deckSel.addEventListener('change', populateCards);
+      cardSel.addEventListener('change', updatePreview);
+      populateCards();
+    }
+  }
+
+  function handleSubmit(){
+    const t = state._txType || document.getElementById('txType').value;
+    const getVal = id => { const el=document.getElementById(id); return el?el.value:null; };
+    const player = ()=> playerById(getVal('f_player'));
+
+    try{
+      switch(t){
+        case 'buyProperty': {
+          const p = player(); const propId = getVal('f_property');
+          const prop = state.board.find(pr=>pr.id===propId);
+          const amt = Number(getVal('f_amount'))||0;
+          if(!prop){ alert('No property available to buy.'); return; }
+          prop.ownerId = p.id; prop.mortgaged = false;
+          p.cash -= amt;
+          addLog(`<b>${p.name}</b> bought <b>${escapeHtml(prop.name)}</b> from the Bank for ${fmt(amt)}.`);
+          break;
+        }
+        case 'sellProperty': {
+          const p = player(); const propId = getVal('f_property');
+          const amt = Number(getVal('f_amount'))||0;
+          const prop = state.board.find(pr=>pr.id===propId);
+          if(prop){ prop.ownerId = null; prop.mortgaged = false; }
+          p.cash += amt;
+          addLog(`<b>${p.name}</b> sold <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank for ${fmt(amt)}.`);
+          break;
+        }
+        case 'mortgage': {
+          const p = player(); const propId = getVal('f_property');
+          const amt = Number(getVal('f_amount'))||0;
+          const prop = state.board.find(pr=>pr.id===propId);
+          if(prop) prop.mortgaged = true;
+          p.cash += amt;
+          addLog(`<b>${p.name}</b> mortgaged <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank, receiving ${fmt(amt)}.`);
+          break;
+        }
+        case 'unmortgage': {
+          const p = player(); const propId = getVal('f_property');
+          const amt = Number(getVal('f_amount'))||0;
+          const prop = state.board.find(pr=>pr.id===propId);
+          if(prop) prop.mortgaged = false;
+          p.cash -= amt;
+          addLog(`<b>${p.name}</b> paid the Bank ${fmt(amt)} to lift the mortgage on <b>${escapeHtml(prop?prop.name:'a property')}</b>.`);
+          break;
+        }
+        case 'payRent': {
+          const p = player(); const p2 = playerById(getVal('f_player2'));
+          const amt = Number(getVal('f_amount'))||0;
+          const propName = getVal('f_propName');
+          if(!p2.passport){
+            addLog(`<b>${p2.name}</b> has no Passport and cannot collect rent — payment blocked.`);
+            break;
+          }
+          p.cash -= amt; p2.cash += amt;
+          addLog(`<b>${p.name}</b> paid <b>${p2.name}</b> ${fmt(amt)} rent${propName?` for ${escapeHtml(propName)}`:''}.`);
+          break;
+        }
+        case 'passStart': {
+          const p = player();
+          p.cash += PASS_START_BONUS;
+          addLog(`<b>${p.name}</b> passed Start and collected ${fmt(PASS_START_BONUS)}.`);
+          break;
+        }
+        case 'bankPay': {
+          const p = player(); const amt = Number(getVal('f_amount'))||0;
+          const reason = getVal('f_reason')||'payment';
+          p.cash -= amt;
+          addLog(`<b>${p.name}</b> paid the Bank ${fmt(amt)} (${escapeHtml(reason)}).`);
+          break;
+        }
+        case 'bankReceive': {
+          const p = player(); const amt = Number(getVal('f_amount'))||0;
+          const reason = getVal('f_reason')||'receipt';
+          p.cash += amt;
+          addLog(`<b>${p.name}</b> received ${fmt(amt)} from the Bank (${escapeHtml(reason)}).`);
+          break;
+        }
+        case 'duty': {
+          const p = player(); const conf = DUTY_RATES[getVal('f_dutyType')];
+          const owned = ownedBy(p.id).filter(pr=>!pr.mortgaged).length;
+          const amt = Math.min(owned*conf.rate, conf.cap);
+          p.cash -= amt;
+          addLog(`<b>${p.name}</b> paid ${fmt(amt)} in ${conf.label} (${owned} propert${owned===1?'y':'ies'} owned).`);
+          break;
+        }
+        case 'creditCardUse': {
+          const p = player(); const amt = Number(getVal('f_amount'))||0;
+          const reason = getVal('f_reason')||'credit card use';
+          p.cash += amt;
+          if(!p.creditCard) p.creditCard = { used: false, remainingInstallments: 0 };
+          p.creditCard.used = true;
+          p.creditCard.remainingInstallments = 6;
+          addLog(`<b>${p.name}</b> drew ${fmt(amt)} on the Credit Card (${escapeHtml(reason)}) — owes $12,000 back in 6×$2,000.`);
+          break;
+        }
+        case 'creditCardInstallment': {
+          const p = player();
+          p.cash -= 2000;
+          p.creditCard.remainingInstallments = Math.max(0, p.creditCard.remainingInstallments-1);
+          if(p.creditCard.remainingInstallments===0) p.creditCard.used=false;
+          addLog(`<b>${p.name}</b> paid a $2,000 credit card installment (${p.creditCard.remainingInstallments} remaining).`);
+          break;
+        }
+        case 'cardDraw': {
+          const p = player();
+          const deck = CARD_DECKS[getVal('f_deck')];
+          const card = deck.cards[Number(getVal('f_card'))];
+          const deckName = getVal('f_deck').startsWith('chance') ? 'CHANCE' : 'UNO';
+          if(card.type==='pay'){ p.cash -= card.amount; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — paid ${fmt(card.amount)}.`); }
+          else if(card.type==='receive'){ p.cash += card.amount; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — received ${fmt(card.amount)}.`); }
+          else if(card.type==='collectEach'){
+            const others = activePlayers().filter(x=>x.id!==p.id);
+            others.forEach(o=>{ o.cash -= card.amount; p.cash += card.amount; });
+            addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — collected ${fmt(card.amount)} from each of ${others.length} player(s).`);
+          }
+          else if(card.type==='jail'){ p.jailed = true; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — sent to Jail.`); }
+          else if(card.type==='passportLose'){ p.passport = false; addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — Passport confiscated.`); }
+          else if(card.type==='repair'){
+            const houses = Number(getVal('f_houses'))||0;
+            const hotels = Number(getVal('f_hotels'))||0;
+            const amt = houses*card.perHouse + hotels*card.perHotel;
+            p.cash -= amt;
+            addLog(`<b>${p.name}</b> drew ${deckName} #${card.num}: "${escapeHtml(card.text)}" — paid ${fmt(amt)} (${houses} house(s), ${hotels} hotel(s)).`);
+          }
+          break;
+        }
+        case 'partyHouse': {
+          const p = player(); const others = activePlayers().filter(x=>x.id!==p.id);
+          others.forEach(o=>{ o.cash -= 200; p.cash += 200; });
+          addLog(`<b>${p.name}</b> landed on Party House and collected $200 from each of ${others.length} player(s).`);
+          break;
+        }
+        case 'resort': {
+          const p = player(); const others = activePlayers().filter(x=>x.id!==p.id);
+          others.forEach(o=>{ o.cash += 200; p.cash -= 200; });
+          addLog(`<b>${p.name}</b> landed on Resort and paid $200 to each of ${others.length} player(s).`);
+          break;
+        }
+        case 'jailEnter': {
+          const p = player(); const reason = getVal('f_reason');
+          p.jailed = true;
+          addLog(`<b>${p.name}</b> went to Jail (${escapeHtml(reason)}).`);
+          break;
+        }
+        case 'jailExit': {
+          const p = player(); const method = getVal('f_method');
+          if(method==='pay500') p.cash -= 500;
+          if(method==='pay3000cc'){ 
+            if(!p.creditCard) p.creditCard = { used: false, remainingInstallments: 0 };
+            p.creditCard.used=true; 
+            p.creditCard.remainingInstallments=Math.max(p.creditCard.remainingInstallments,6); 
+          }
+          p.jailed = false;
+          const methodText = { pay500:'paid the Bank $500', roll12:'rolled a 12 and threw three times', pay3000cc:'paid $3,000 via Credit Card' }[method];
+          addLog(`<b>${p.name}</b> got out of Jail — ${methodText}.`);
+          break;
+        }
+        case 'passportRegain': {
+          const p = player(); const method = getVal('f_method');
+          if(method==='pay5000') p.cash -= 5000;
+          p.passport = true;
+          addLog(`<b>${p.name}</b> regained their Passport (${method==='pay5000'?'paid $5,000':'completed 6 rounds'}).`);
+          break;
+        }
+        case 'bankrupt': {
+          const p = player();
+          state.board.forEach(pr=>{ if(pr.ownerId===p.id){ pr.ownerId=null; pr.mortgaged=false; } });
+          p.bankrupt = true; p.cash = 0;
+          addLog(`<b>${p.name}</b> is BANKRUPT and retires from the game. Properties return to the Bank.`);
+          break;
+        }
+      }
+    }catch(err){
+      console.error(err);
+      alert('Could not record that transaction — check the fields and try again.');
+      return;
+    }
+    saveState();
+  }
+</script>
+</body>
+</html>
