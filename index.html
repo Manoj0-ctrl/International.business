@@ -6,6 +6,9 @@
 <title>THE LEDGER — International Business Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Chart.js CDN for Live Analytics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
   :root{
     --ink:#12271F;
@@ -81,6 +84,21 @@
     padding:5px 10px;border-radius:2px;cursor:pointer;
   }
   .btn-ghost:hover{border-color:var(--brass-light);color:var(--brass-light);}
+  
+  .nav-tabs {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .nav-tab {
+    flex: 1; text-align: center; padding: 10px;
+    background: rgba(244,239,221,0.1); color: var(--paper);
+    border: 1px solid rgba(244,239,221,0.2);
+    border-radius: 3px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: var(--brass-light); color: var(--ink); border-color: var(--brass-light); font-weight: bold;
+  }
 
   .paper-card{
     background:var(--paper);
@@ -89,6 +107,7 @@
     padding:20px;
     position:relative;
     background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, var(--line) 28px);
+    margin-bottom: 16px;
   }
   .paper-card::before{
     content:'';
@@ -169,6 +188,7 @@
   }
   .player-card.bankrupt{opacity:0.55;}
   .player-card.room-card:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.4); }
+  
   .rank-row{display:flex;align-items:center;justify-content:space-between;}
   .rank-name{display:flex;align-items:baseline;gap:8px;}
   .rank-num{
@@ -180,9 +200,9 @@
     font-family:'Playfair Display',serif;
     font-weight:700;font-size:18px;color:var(--ink);
   }
-  .net-worth{
+  .liquid-cash{
     font-family:'JetBrains Mono',monospace;
-    font-weight:700;font-size:16.5px;color:var(--good);
+    font-weight:700;font-size:22px;color:var(--good);
   }
   .sub-figures{
     display:flex;gap:14px;margin-top:6px;
@@ -264,6 +284,10 @@
 
   select, input{outline:none;}
   select:focus, input:focus{border-color:var(--brass);}
+  
+  .chart-container {
+    position: relative; height: 220px; width: 100%; margin-bottom: 20px; margin-left: 10px;
+  }
 </style>
 </head>
 <body>
@@ -294,6 +318,15 @@
 
   let state = null;
   let lobbyState = null;
+  
+  // Local Session Management
+  const identityKey = 'ledger_identity_' + getRoomId();
+  let localPlayerId = getRoomId() ? localStorage.getItem(identityKey) : null;
+  let currentView = 'dashboard'; 
+  
+  // Chart Instances
+  let barChart = null;
+  let pieChart = null;
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function escapeAttr(s){ return escapeHtml(s); }
@@ -304,13 +337,11 @@
   // LOBBY vs ROOM ROUTING
   // -------------------------------------------------------------
   if (!getRoomId()) {
-    // We are in the Lobby
     onValue(ref(db, 'ledger_rooms'), (snapshot) => {
       lobbyState = snapshot.val() || {};
       renderLobby();
     });
   } else {
-    // We are in a specific Room
     let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
     onValue(gameRef, (snapshot) => {
       const data = snapshot.val();
@@ -427,7 +458,7 @@
   }
 
   // -------------------------------------------------------------
-  // RENDER LOBBY
+  // RENDER VIEWS
   // -------------------------------------------------------------
   function renderLobby() {
     const app = document.getElementById('app');
@@ -473,24 +504,85 @@
     });
   }
 
-  // -------------------------------------------------------------
-  // RENDER ROOM
-  // -------------------------------------------------------------
   function render(){
     const app = document.getElementById('app');
+    
+    // Phase 1: Setup
     if(!state.started){
       app.innerHTML = renderSetup();
       bindSetup();
       return;
     }
-    app.innerHTML = renderHeader() + renderLeaderboard() + renderActionPanel() + renderLog();
+    
+    // Phase 2: Identity Gate
+    if(!localPlayerId){
+      app.innerHTML = renderIdentityGate();
+      bindIdentityGate();
+      return;
+    }
+
+    // Phase 3: Main Application Routing
+    let content = renderHeader() + renderNavTabs();
+    
+    if (currentView === 'dashboard') {
+      content += renderDashboard();
+    } else {
+      content += renderOverview();
+    }
+    
+    app.innerHTML = content;
     bindDashboard();
+    
+    if(currentView === 'overview') {
+      // Small timeout ensures the DOM has fully painted the Canvas elements
+      setTimeout(updateCharts, 50);
+    }
+  }
+  
+  function renderNavTabs() {
+    return `
+      <div class="nav-tabs">
+        <div class="nav-tab ${currentView==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</div>
+        <div class="nav-tab ${currentView==='overview'?'active':''}" data-tab="overview">Global Overview</div>
+      </div>
+    `;
+  }
+
+  function renderIdentityGate() {
+    const playersHtml = (state.players || []).map(p => `
+      <button class="btn-secondary" style="margin-bottom:8px;" data-identity="${p.id}">Play as ${escapeHtml(p.name)}</button>
+    `).join('');
+    
+    return `
+      <div class="masthead">
+        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())}</div>
+        <h1>Who are you?</h1>
+        <div class="sub">Select your identity to access your personal dashboard.</div>
+      </div>
+      <div class="paper-card" style="text-align:center;">
+        ${playersHtml}
+        <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:16px 0;">
+        <button class="btn-ghost" style="color:var(--ink); border-color:var(--ink);" data-identity="banker">Join as Banker / Spectator</button>
+      </div>
+    `;
+  }
+  
+  function bindIdentityGate() {
+    document.querySelectorAll('[data-identity]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        localPlayerId = e.target.dataset.identity;
+        localStorage.setItem(identityKey, localPlayerId);
+        render();
+      });
+    });
   }
 
   function renderHeader(){
+    const myPlayer = playerById(localPlayerId);
+    const greeting = myPlayer ? `Hey, ${escapeHtml(myPlayer.name)}` : 'Banker View';
     return `
       <div class="masthead">
-        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
+        <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; ${greeting}</div>
         <h1>THE LEDGER</h1>
         <div class="sub">a live account of fortunes won & lost</div>
         <div class="round-strip">
@@ -530,17 +622,71 @@
     `;
   }
 
-  function stampRow(p){
-    let stamps = '';
-    if(p.bankrupt) stamps += `<span class="stamp">Bankrupt</span>`;
-    if(p.jailed) stamps += `<span class="stamp">Jailed</span>`;
-    if(!p.passport) stamps += `<span class="stamp">No Passport</span>`;
-    if(p.creditCard && p.creditCard.used) stamps += `<span class="stamp blue">Owes ${fmt(p.creditCard.remainingInstallments*2000)}</span>`;
-    return stamps ? `<div class="stamps">${stamps}</div>` : '';
+  // --- DASHBOARD VIEW (Specific to User) ---
+  function renderDashboard() {
+    let html = '';
+    const p = playerById(localPlayerId);
+    
+    if (p) {
+      // Re-ordered display: Liquid Cash is huge, Net Worth is small
+      const owned = ownedBy(p.id);
+      const nw = netWorth(p);
+      html += `
+        <div class="section-label">Your Accounts</div>
+        <div class="paper-card" style="text-align:center;">
+          <div class="sub-figures" style="justify-content:center; margin-bottom:4px;">Liquid Cash Available</div>
+          <div class="liquid-cash" style="font-size:36px; margin-bottom:12px;">${fmt(p.cash)}</div>
+          <div class="sub-figures" style="justify-content:center;">
+            <span>net worth: ${fmt(nw)}</span>
+            <span>props: ${owned.filter(pr=>!pr.mortgaged).length}</span>
+          </div>
+          ${stampRow(p)}
+          <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:16px 0;">
+          <div class="card-title" style="font-size:15px; margin:0 0 10px 0; text-align:left;">Your Portfolio</div>
+          <div class="props-list" style="border:none; padding:0; text-align:left;">
+            ${owned.length===0?'<div style="font-size:12px;color:rgba(29,43,53,0.5);">No properties owned yet.</div>':''}
+            ${owned.map(pr=>`
+              <div class="prop-row">
+                <span><span class="cat">${pr.category}</span>${escapeHtml(pr.name)}${pr.mortgaged?'<span class="mort">MORTGAGED</span>':''}</span>
+                <span>${fmt(pr.price)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      html += `<div class="hint-box" style="margin-bottom:16px;">You are observing as the Banker. Use the action panel below to orchestrate the game.</div>`;
+    }
+    
+    html += renderActionPanel();
+    return html;
   }
 
+  // --- OVERVIEW VIEW (Global Stats) ---
+  function renderOverview() {
+    let html = `
+      <div class="section-label">Live Analytics</div>
+      <div class="paper-card">
+        <div class="card-title" style="font-size:14px; text-align:center; margin:0 0 10px 0;">Capital & Equity</div>
+        <div class="chart-container">
+          <canvas id="netWorthChart"></canvas>
+        </div>
+        <hr style="border:none; border-top:1px dashed rgba(29,43,53,0.2); margin:20px 0;">
+        <div class="card-title" style="font-size:14px; text-align:center; margin:0 0 10px 0;">Global Real Estate Control</div>
+        <div class="chart-container" style="height: 180px;">
+          <canvas id="assetChart"></canvas>
+        </div>
+      </div>
+    `;
+    
+    html += renderLeaderboard();
+    html += renderLog();
+    return html;
+  }
+
+  // Generate Leaderboard emphasizing Liquid Cash hierarchy
   function renderLeaderboard(){
-    const sorted = [...(state.players || [])].sort((a,b)=>netWorth(b)-netWorth(a));
+    const sorted = [...(state.players || [])].sort((a,b)=>a.cash - b.cash).reverse();
     const cards = sorted.map((p,i)=>{
       const propsOpen = state._openProps === p.id;
       const owned = ownedBy(p.id);
@@ -561,10 +707,10 @@
               <span class="rank-num">#${i+1}</span>
               <span class="p-name">${escapeHtml(p.name)}</span>
             </div>
-            <div class="net-worth">${fmt(netWorth(p))}</div>
+            <div class="liquid-cash">${fmt(p.cash)}</div>
           </div>
           <div class="sub-figures">
-            <span>cash ${fmt(p.cash)}</span>
+            <span>net worth ${fmt(netWorth(p))}</span>
             <span>props ${owned.filter(pr=>!pr.mortgaged).length}</span>
           </div>
           ${stampRow(p)}
@@ -573,7 +719,72 @@
         </div>
       `;
     }).join('');
-    return `<div class="section-label">Standings</div>${cards}`;
+    return `<div class="section-label">Live Standings</div>${cards}`;
+  }
+
+  function updateCharts() {
+    const players = activePlayers();
+    
+    // --- 1. NET WORTH / CASH BAR CHART ---
+    const ctxNW = document.getElementById('netWorthChart');
+    if(ctxNW) {
+      if(barChart) barChart.destroy();
+      
+      const labels = players.map(p => p.name);
+      const cashData = players.map(p => p.cash);
+      const assetData = players.map(p => ownedBy(p.id).reduce((s,pr)=>s+(pr.mortgaged?0:pr.price),0));
+      
+      barChart = new Chart(ctxNW, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Liquid Cash', data: cashData, backgroundColor: '#3C6E47', borderRadius: 2 },
+            { label: 'Property Assets', data: assetData, backgroundColor: '#B08D3E', borderRadius: 2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, grid: { color: 'rgba(29,43,53,0.1)' }, ticks: { font: {family: 'JetBrains Mono'} } }
+          },
+          plugins: { legend: { labels: { font: { family: 'Inter', size: 11 } } } }
+        }
+      });
+    }
+
+    // --- 2. ASSET DISTRIBUTION PIE CHART ---
+    const ctxAsset = document.getElementById('assetChart');
+    if(ctxAsset) {
+      if(pieChart) pieChart.destroy();
+      
+      const labels = players.map(p => p.name);
+      const propCounts = players.map(p => ownedBy(p.id).filter(pr=>!pr.mortgaged).length);
+      const bgColors = ['#1D2B35', '#B08D3E', '#9B3A34', '#2E4A6B', '#3C6E47', '#D8BB74'];
+      
+      pieChart = new Chart(ctxAsset, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: propCounts, backgroundColor: bgColors.slice(0, players.length), borderWidth: 2, borderColor: '#F4EFDD' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { font: { family: 'Inter', size: 11 } } } },
+          cutout: '60%'
+        }
+      });
+    }
+  }
+
+  function stampRow(p){
+    let stamps = '';
+    if(p.bankrupt) stamps += `<span class="stamp">Bankrupt</span>`;
+    if(p.jailed) stamps += `<span class="stamp">Jailed</span>`;
+    if(!p.passport) stamps += `<span class="stamp">No Passport</span>`;
+    if(p.creditCard && p.creditCard.used) stamps += `<span class="stamp blue">Owes ${fmt(p.creditCard.remainingInstallments*2000)}</span>`;
+    return stamps ? `<div class="stamps">${stamps}</div>` : '';
   }
 
   function playerOptions(filterFn){
@@ -631,7 +842,7 @@
           </optgroup>
         </select>
         ${renderFieldsFor(t)}
-        <button class="btn-primary" data-action="submit-tx">Record it</button>
+        <button class="btn-primary" id="btnSubmitTx">Record it</button>
       </div>
     `;
   }
@@ -855,19 +1066,32 @@
   }
 
   function bindDashboard(){
-    document.querySelector('[data-action="next-round"]').addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        currentView = e.target.dataset.tab;
+        render();
+      });
+    });
+    
+    const nextBtn = document.querySelector('[data-action="next-round"]');
+    if(nextBtn) nextBtn.addEventListener('click', ()=>{
       state.round += 1;
       saveState();
     });
-    document.querySelector('[data-action="leave-room"]').addEventListener('click', ()=>{
+    
+    const leaveBtn = document.querySelector('[data-action="leave-room"]');
+    if(leaveBtn) leaveBtn.addEventListener('click', ()=>{
       window.location.hash = '';
     });
-    document.querySelector('[data-action="reset-game"]').addEventListener('click', ()=>{
+    
+    const resetBtn = document.querySelector('[data-action="reset-game"]');
+    if(resetBtn) resetBtn.addEventListener('click', ()=>{
       if(confirm('Reset the whole game? This clears all players and history.')){
         state = defaultState();
         saveState();
       }
     });
+    
     document.querySelectorAll('[data-toggle-props]').forEach(el=>{
       el.addEventListener('click', ()=>{
         const id = el.dataset.toggleProps;
@@ -877,18 +1101,25 @@
     });
 
     const txSelect = document.getElementById('txType');
-    txSelect.addEventListener('change', e=>{
+    if(txSelect) txSelect.addEventListener('change', e=>{
       state._txType = e.target.value;
       render();
     });
 
     wireDynamicFields();
-    document.querySelector('[data-action="submit-tx"]').addEventListener('click', handleSubmit);
+    
+    const submitBtn = document.getElementById('btnSubmitTx');
+    if(submitBtn) submitBtn.addEventListener('click', handleSubmit);
   }
 
   function wireDynamicFields(){
     const playerSel = document.getElementById('f_player');
     if(playerSel){
+      // Pre-select the logged-in player automatically
+      if (localPlayerId !== 'banker' && !playerSel.dataset.only) {
+        playerSel.value = localPlayerId;
+      }
+      
       const only = playerSel.dataset.only;
       if(only){
         [...playerSel.options].forEach(opt=>{
@@ -1039,6 +1270,16 @@
   }
 
   function handleSubmit(){
+    const btn = document.getElementById('btnSubmitTx');
+    // Debounce to prevent double-tapping
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+    
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerText = "Record it";
+    }, 1500);
+
     const t = state._txType || document.getElementById('txType').value;
     const getVal = id => { const el=document.getElementById(id); return el?el.value:null; };
     const player = ()=> playerById(getVal('f_player'));
