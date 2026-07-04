@@ -165,8 +165,10 @@
     box-shadow:0 6px 18px rgba(0,0,0,0.25);
     position:relative;
     overflow:hidden;
+    transition: transform 0.1s ease;
   }
   .player-card.bankrupt{opacity:0.55;}
+  .player-card.room-card:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.4); }
   .rank-row{display:flex;align-items:center;justify-content:space-between;}
   .rank-name{display:flex;align-items:baseline;gap:8px;}
   .rank-num{
@@ -284,19 +286,54 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  const getRoomId = () => window.location.hash.replace('#', '').trim() || 'Lobby';
-  let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
+  const getRoomId = () => window.location.hash.replace('#', '').trim();
 
   window.addEventListener('hashchange', () => {
     window.location.reload();
   });
 
   let state = null;
+  let lobbyState = null;
 
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function fmt(n){ const neg = n < 0; const v = Math.abs(Math.round(n)); return (neg?'-':'') + '$' + v.toLocaleString('en-US'); }
+
+  // -------------------------------------------------------------
+  // LOBBY vs ROOM ROUTING
+  // -------------------------------------------------------------
+  if (!getRoomId()) {
+    // We are in the Lobby
+    onValue(ref(db, 'ledger_rooms'), (snapshot) => {
+      lobbyState = snapshot.val() || {};
+      renderLobby();
+    });
+  } else {
+    // We are in a specific Room
+    let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
+    onValue(gameRef, (snapshot) => {
+      const data = snapshot.val();
+      const draftBackup = state ? state._draftPlayers : null;
+      const activeTxTypeBackup = state ? state._txType : null;
+      const openPropsBackup = state ? state._openProps : null;
+
+      state = data ? data : defaultState();
+
+      if (!state.started && draftBackup) state._draftPlayers = draftBackup;
+      if (!state._txType && activeTxTypeBackup) state._txType = activeTxTypeBackup;
+      if (!state._openProps && openPropsBackup) state._openProps = openPropsBackup;
+
+      render();
+    });
+  }
+
+  // -------------------------------------------------------------
+  // DATA CONSTANTS
+  // -------------------------------------------------------------
   const DUTY_RATES = { custom:{rate:100,cap:1000,label:'Custom Duty'}, travel:{rate:50,cap:500,label:'Travelling Duty'} };
   const PASS_START_BONUS = 1500;
 
-  // Fully updated Property Cards Array + Colour Groups
   const MASTER_PROPERTIES = [
     {name:'Italy', price:3500, rent:200, mortgage:1000, category:'Country', color:'Red'},
     {name:'Germany', price:3500, rent:400, mortgage:1750, category:'Country', color:'Red'},
@@ -318,12 +355,12 @@
     {name:'Japan', price:2500, rent:250, mortgage:1250, category:'Country', color:'Blue'},
     {name:'Iraq', price:5000, rent:500, mortgage:2500, category:'Country', color:'Green'},
     {name:'Singapore', price:3000, rent:300, mortgage:1500, category:'Country', color:'Blue'},
-    {name:'Satellite', price:2000, rent:500, mortgage:1250, category:'Transport', color:null},
-    {name:'Waterways', price:9500, rent:1400, mortgage:2000, category:'Transport', color:null},
-    {name:'Airways', price:10500, rent:1500, mortgage:5500, category:'Transport', color:null},
-    {name:'Roadways', price:3500, rent:800, mortgage:1800, category:'Transport', color:null},
-    {name:'Petroleum', price:5500, rent:500, mortgage:1300, category:'Transport', color:null},
-    {name:'Railways', price:9500, rent:1500, mortgage:5000, category:'Transport', color:null}
+    {name:'Satellite', price:2000, rent:500, mortgage:1250, category:'Transport', color:""},
+    {name:'Waterways', price:9500, rent:1400, mortgage:2000, category:'Transport', color:""},
+    {name:'Airways', price:10500, rent:1500, mortgage:5500, category:'Transport', color:""},
+    {name:'Roadways', price:3500, rent:800, mortgage:1800, category:'Transport', color:""},
+    {name:'Petroleum', price:5500, rent:500, mortgage:1300, category:'Transport', color:""},
+    {name:'Railways', price:9500, rent:1500, mortgage:5000, category:'Transport', color:""}
   ];
 
   const CARD_DECKS = {
@@ -365,47 +402,80 @@
     return { started:false, round:1, players:[], board:[], log:[] };
   }
 
-  onValue(gameRef, (snapshot) => {
-    const data = snapshot.val();
-    const draftBackup = state ? state._draftPlayers : null;
-    const activeTxTypeBackup = state ? state._txType : null;
-    const openPropsBackup = state ? state._openProps : null;
-
-    state = data ? data : defaultState();
-
-    if (!state.started && draftBackup) state._draftPlayers = draftBackup;
-    if (!state._txType && activeTxTypeBackup) state._txType = activeTxTypeBackup;
-    if (!state._openProps && openPropsBackup) state._openProps = openPropsBackup;
-
-    render();
-  });
-
   async function saveState(){
     try{ 
+      let gameRef = ref(db, 'ledger_rooms/' + getRoomId());
       await set(gameRef, state); 
     } catch(e){ 
       console.error('Firebase state persistence push failed', e); 
     }
   }
 
-  function uid(){ return Math.random().toString(36).slice(2,9); }
-  function fmt(n){ const neg = n < 0; const v = Math.abs(Math.round(n)); return (neg?'-':'') + '$' + v.toLocaleString('en-US'); }
-
   function addLog(text){
     if(!state.log) state.log = [];
     state.log.unshift({ id: uid(), round: state.round, text });
   }
 
-  function activePlayers(){ return state.players.filter(p=>!p.bankrupt); }
-  function playerById(id){ return state.players.find(p=>p.id===id); }
+  function activePlayers(){ return (state.players || []).filter(p=>!p.bankrupt); }
+  function playerById(id){ return (state.players || []).find(p=>p.id===id); }
   function ownedBy(playerId){ return (state.board || []).filter(pr=>pr.ownerId===playerId); }
 
   function netWorth(p){
     const propsVal = ownedBy(p.id).reduce((s,pr)=>s+(pr.mortgaged?0:pr.price),0);
-    const ccDebt = p.creditCard.used ? p.creditCard.remainingInstallments*2000 : 0;
+    const ccDebt = (p.creditCard && p.creditCard.used) ? p.creditCard.remainingInstallments*2000 : 0;
     return p.cash + propsVal - ccDebt;
   }
 
+  // -------------------------------------------------------------
+  // RENDER LOBBY
+  // -------------------------------------------------------------
+  function renderLobby() {
+    const app = document.getElementById('app');
+    const roomsHtml = Object.keys(lobbyState).map(key => {
+       const r = lobbyState[key];
+       const status = r.started ? `Round ${r.round} &middot; ${(r.players||[]).length} players` : `Setting up...`;
+       return `
+         <div class="player-card room-card" style="cursor:pointer;" data-join-room="${escapeAttr(key)}">
+           <div class="rank-row">
+             <div class="rank-name"><span class="p-name">#${escapeHtml(key)}</span></div>
+             <div class="net-worth" style="font-size:12.5px;color:rgba(29,43,53,0.55);font-family:'Inter',sans-serif;">${status} &rarr;</div>
+           </div>
+         </div>
+       `;
+    }).join('') || '<div class="empty-log" style="margin-top:-10px;">No active rooms found. Create one above!</div>';
+
+    app.innerHTML = `
+      <div class="masthead">
+        <div class="eyebrow">EST. AT THE TABLE &middot; BANK & TRUST</div>
+        <h1>THE LEDGER</h1>
+        <div class="sub">a live account of fortunes won & lost</div>
+      </div>
+      <div class="paper-card">
+        <div class="card-title">Open a new room</div>
+        <div class="card-hint">Create a private sync session for your game.</div>
+        <div class="player-input-row" style="margin-left:0; margin-top:14px;">
+          <input type="text" id="newRoomName" placeholder="Room name (e.g. GameNight)" maxlength="20">
+        </div>
+        <button class="btn-primary" id="btnCreateRoom">Create & Join Room</button>
+      </div>
+      <div class="section-label">Active Sessions</div>
+      ${roomsHtml}
+    `;
+
+    document.getElementById('btnCreateRoom').addEventListener('click', () => {
+       const val = document.getElementById('newRoomName').value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+       if(val) window.location.hash = val;
+    });
+    document.querySelectorAll('[data-join-room]').forEach(el => {
+       el.addEventListener('click', () => {
+          window.location.hash = el.dataset.joinRoom;
+       });
+    });
+  }
+
+  // -------------------------------------------------------------
+  // RENDER ROOM
+  // -------------------------------------------------------------
   function render(){
     const app = document.getElementById('app');
     if(!state.started){
@@ -422,11 +492,12 @@
       <div class="masthead">
         <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
         <h1>THE LEDGER</h1>
-        <div class="sub">a live account of fortunes won &amp; lost</div>
+        <div class="sub">a live account of fortunes won & lost</div>
         <div class="round-strip">
           <span class="round-pill">ROUND ${state.round}</span>
+          <button class="btn-ghost" data-action="leave-room">&larr; lobby</button>
           <button class="btn-ghost" data-action="next-round">+ next round</button>
-          <button class="btn-ghost" data-action="reset-game">reset game</button>
+          <button class="btn-ghost" data-action="reset-game">reset</button>
         </div>
       </div>
     `;
@@ -444,11 +515,14 @@
       <div class="masthead">
         <div class="eyebrow">ROOM: ${escapeHtml(getRoomId().toUpperCase())} &middot; Live Sync</div>
         <h1>THE LEDGER</h1>
-        <div class="sub">a live account of fortunes won &amp; lost</div>
+        <div class="sub">a live account of fortunes won & lost</div>
+        <div class="round-strip" style="margin-top:16px;">
+          <button class="btn-ghost" data-action="leave-room" style="padding:6px 14px;">&larr; Back to Lobby</button>
+        </div>
       </div>
       <div class="paper-card">
         <div class="card-title">Open new accounts</div>
-        <div class="card-hint">Current Room code: <b>#${escapeHtml(getRoomId())}</b>. To start a separate session with friends, simply append a custom hash identifier to your URL line (e.g. <i>index.html#RoomXYZ</i>).</div>
+        <div class="card-hint">Every player starts with $25,000 cash, a $10,000 credit line, and a valid passport.</div>
         ${rows}
         <button class="btn-secondary" data-action="add-draft" style="margin-bottom:14px;">+ add player</button>
         <button class="btn-primary" data-action="start-game">Start the game</button>
@@ -466,7 +540,7 @@
   }
 
   function renderLeaderboard(){
-    const sorted = [...state.players].sort((a,b)=>netWorth(b)-netWorth(a));
+    const sorted = [...(state.players || [])].sort((a,b)=>netWorth(b)-netWorth(a));
     const cards = sorted.map((p,i)=>{
       const propsOpen = state._openProps === p.id;
       const owned = ownedBy(p.id);
@@ -566,7 +640,7 @@
     const active = (p)=>!p.bankrupt;
     switch(t){
       case 'buyProperty': {
-        const available = state.board.filter(pr=>pr.ownerId===null);
+        const available = (state.board || []).filter(pr=>!pr.ownerId);
         return `
         <div class="field-label">Player</div>
         <select class="action-select" id="f_player">${playerOptions(active)}</select>
@@ -736,11 +810,9 @@
     return `<div class="section-label">Ledger</div>${rows}`;
   }
 
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function escapeAttr(s){ return escapeHtml(s); }
-
-  /* ---------------- BIND EVENTS ---------------- */
-
+  // -------------------------------------------------------------
+  // EVENT BINDINGS
+  // -------------------------------------------------------------
   function bindSetup(){
     document.querySelectorAll('[data-draft-idx]').forEach(inp=>{
       inp.addEventListener('input', e=>{
@@ -757,6 +829,9 @@
     if(addBtn) addBtn.addEventListener('click', ()=>{
       if(state._draftPlayers.length<6){ state._draftPlayers.push(''); render(); }
     });
+    const leaveBtn = document.querySelector('[data-action="leave-room"]');
+    if(leaveBtn) leaveBtn.addEventListener('click', () => window.location.hash = '');
+
     const startBtn = document.querySelector('[data-action="start-game"]');
     if(startBtn) startBtn.addEventListener('click', ()=>{
       const names = state._draftPlayers.map(n=>n.trim()).filter(Boolean);
@@ -768,7 +843,7 @@
       }));
       state.board = MASTER_PROPERTIES.map(pr=>({ 
         id: uid(), name: pr.name, price: pr.price, rent: pr.rent, mortgage: pr.mortgage, 
-        category: pr.category, color: pr.color, ownerId: null, mortgaged:false 
+        category: pr.category, color: pr.color || "", ownerId: "", mortgaged:false 
       }));
       state.started = true;
       state.round = 1;
@@ -784,6 +859,9 @@
       state.round += 1;
       saveState();
     });
+    document.querySelector('[data-action="leave-room"]').addEventListener('click', ()=>{
+      window.location.hash = '';
+    });
     document.querySelector('[data-action="reset-game"]').addEventListener('click', ()=>{
       if(confirm('Reset the whole game? This clears all players and history.')){
         state = defaultState();
@@ -793,7 +871,7 @@
     document.querySelectorAll('[data-toggle-props]').forEach(el=>{
       el.addEventListener('click', ()=>{
         const id = el.dataset.toggleProps;
-        state._openProps = state._openProps===id ? null : id;
+        state._openProps = state._openProps===id ? "" : id;
         render();
       });
     });
@@ -805,7 +883,6 @@
     });
 
     wireDynamicFields();
-
     document.querySelector('[data-action="submit-tx"]').addEventListener('click', handleSubmit);
   }
 
@@ -856,14 +933,13 @@
       populateProps2();
     }
 
-    // Advanced Autofill Logic incorporating Colour Groups
     document.querySelectorAll('[data-autofill]').forEach(sel => {
       const amountField = document.getElementById('f_amount');
       const hintField = document.getElementById('rentMultiplierHint');
       const autofillMode = sel.dataset.autofill;
       
       const updateAmount = () => {
-        const pr = state.board.find(x => x.id === sel.value);
+        const pr = (state.board || []).find(x => x.id === sel.value);
         if (hintField) hintField.innerHTML = '';
         
         if (pr && amountField) {
@@ -872,13 +948,11 @@
           if (autofillMode === 'rent') {
             let rentAmt = pr.rent;
             
-            // Safeguard lookup for properties deployed before this patch
             const masterPr = MASTER_PROPERTIES.find(m => m.name === pr.name);
             const prColor = masterPr ? masterPr.color : pr.color;
             
             if (pr.category === 'Country' && prColor && pr.ownerId) {
-               // Verify how many properties of this exact color the landlord holds
-               const ownedOfColor = state.board.filter(b => {
+               const ownedOfColor = (state.board || []).filter(b => {
                  if (b.ownerId !== pr.ownerId || b.mortgaged) return false;
                  const m = MASTER_PROPERTIES.find(master => master.name === b.name);
                  return (m ? m.color : b.color) === prColor;
@@ -889,7 +963,7 @@
                  if (hintField) hintField.innerHTML = `↑ Rent doubled! (Owner has ${ownedOfColor.length} ${prColor} sites). <i>Adjust manually if houses are built.</i>`;
                } else {
                  if (hintField) hintField.innerHTML = `Base rent. <i>Adjust manually if houses are built.</i>`;
-                 if (hintField) hintField.style.color = 'rgba(29,43,53,0.55)'; // Dim standard text
+                 if (hintField) hintField.style.color = 'rgba(29,43,53,0.55)'; 
                }
             }
             amountField.value = rentAmt;
@@ -973,7 +1047,7 @@
       switch(t){
         case 'buyProperty': {
           const p = player(); const propId = getVal('f_property');
-          const prop = state.board.find(pr=>pr.id===propId);
+          const prop = (state.board || []).find(pr=>pr.id===propId);
           const amt = Number(getVal('f_amount'))||0;
           if(!prop){ alert('No property available to buy.'); return; }
           prop.ownerId = p.id; prop.mortgaged = false;
@@ -984,8 +1058,8 @@
         case 'sellProperty': {
           const p = player(); const propId = getVal('f_property');
           const amt = Number(getVal('f_amount'))||0;
-          const prop = state.board.find(pr=>pr.id===propId);
-          if(prop){ prop.ownerId = null; prop.mortgaged = false; }
+          const prop = (state.board || []).find(pr=>pr.id===propId);
+          if(prop){ prop.ownerId = ""; prop.mortgaged = false; }
           p.cash += amt;
           addLog(`<b>${p.name}</b> sold <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank for ${fmt(amt)}.`);
           break;
@@ -993,7 +1067,7 @@
         case 'mortgage': {
           const p = player(); const propId = getVal('f_property');
           const amt = Number(getVal('f_amount'))||0;
-          const prop = state.board.find(pr=>pr.id===propId);
+          const prop = (state.board || []).find(pr=>pr.id===propId);
           if(prop) prop.mortgaged = true;
           p.cash += amt;
           addLog(`<b>${p.name}</b> mortgaged <b>${escapeHtml(prop?prop.name:'a property')}</b> to the Bank, receiving ${fmt(amt)}.`);
@@ -1002,7 +1076,7 @@
         case 'unmortgage': {
           const p = player(); const propId = getVal('f_property');
           const amt = Number(getVal('f_amount'))||0;
-          const prop = state.board.find(pr=>pr.id===propId);
+          const prop = (state.board || []).find(pr=>pr.id===propId);
           if(prop) prop.mortgaged = false;
           p.cash -= amt;
           addLog(`<b>${p.name}</b> paid the Bank ${fmt(amt)} to lift the mortgage on <b>${escapeHtml(prop?prop.name:'a property')}</b>.`);
@@ -1012,7 +1086,7 @@
           const p = player(); const p2 = playerById(getVal('f_player2'));
           const amt = Number(getVal('f_amount'))||0;
           const propId = getVal('f_propName');
-          const prop = state.board.find(pr=>pr.id===propId);
+          const prop = (state.board || []).find(pr=>pr.id===propId);
           const propNameStr = prop ? prop.name : '';
           
           if(!p2.passport){
@@ -1132,7 +1206,7 @@
         }
         case 'bankrupt': {
           const p = player();
-          state.board.forEach(pr=>{ if(pr.ownerId===p.id){ pr.ownerId=null; pr.mortgaged=false; } });
+          (state.board || []).forEach(pr=>{ if(pr.ownerId===p.id){ pr.ownerId=""; pr.mortgaged=false; } });
           p.bankrupt = true; p.cash = 0;
           addLog(`<b>${p.name}</b> is BANKRUPT and retires from the game. Properties return to the Bank.`);
           break;
